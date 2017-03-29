@@ -1,0 +1,139 @@
+\section{The Grammar}
+\label{lbl:grammar}
+
+In this section, we mainly focus on the syntax of our language, it is divided into different parts and basically described in  \emph{Extended Backus-Naur form (EBNF)}.
+
+Let's introduce the overview of this language first.
+
+\begin{bnf}
+    \ntsym{program} &::= & [\ntsym{statement}]^* \\
+    \ntsym{statement} &::=& \ntsym{packageRequirement} \\
+    &|& \ntsym{channel} \\
+    &|& \ntsym{component} \\
+    &|& \ntsym{connector} \\
+\end{bnf}
+
+\subsection{Type System}
+
+The basic idea behind this type system is that we try to satisfy both researchers and programmers.
+
+\begin{bnf}
+    \ntsym{primitiveType} &::= & \tsym{int}[\ntsym{termint}\tsym{..}\ntsym{termint}] \\
+    & | & \tsym{float} | \tsym{char} | \tsym{bool}\\
+    & | & \tsym{enum \{} \ntsym{identifier}^+\tsym{\}}\\ 
+    \ntsym{type} &::= & \ntsym{rawtype} \\
+    & | & \ntsym{identifier} \\
+    & | & \tsym{array} \ntsym{type} \tsym{[} \ntsym{termint} \tsym{]}\\
+    & | & \tsym{map} \tsym{[} \ntsym{type}\tsym{]} \ntsym{type}\\
+    & | & \tsym{struct} \tsym{\{} (\ntsym{identifier} \tsym{:} \ntsym{type})^+ \tsym{\}}\\
+\end{bnf}
+
+% TODO is raw type a common name ? needs some googling
+
+\noindent\emph{Basic Type.} \lang has four built-in basic types, they are:
+\begin{description}
+    \item[Int.]  Two types of integers are 
+    \item[Float.] 
+    \item[Bool.]
+    \item[Enum.]
+\end{description}
+
+\noindent\emph{Extended Type.} Extended type offers an approach to contruct complex data types through the primitive ones. Three extended types are introduced as follows:
+\begin{description}
+    \item[Array.] An \emph{array }$T$[n] is a finite ordered collection containing exactly $n$ elements of type $T$.
+    \item[Map.] A \emph{map }[$T_{key}$] $T_{val}$ is a dictionary that maps a key of type $T_{key}$ to a value of type $T_{val}$
+    \item[Struct.] A \emph{struct }\{$id_1:T_1,\cdots,id_n:T_n$\} contain $n$ fields, each has a particular type $T_i$ and a unique identifier $id_i$.
+\end{description}
+
+Type systems often differ greatly between formal models and real-world programming languages. For example, PRISM\cite{KwiatkowskaCav2011}, ..
+
+% TODO: in popular standards, a system may contains different safety/security level. 
+
+\begin{definition}[Finite Types]
+    A type in \lang is \emph{finite} iff. it has a finite value domain.
+\end{definition}
+
+In \lang's type system, most of basic types are finite except for the unlimited integers and doubles. Besides, extended types are also finite if they are based on finite ones.
+
+\subsection {Channels}
+
+Channels are the atomic functional units in our language. A channel compries several parameters; a set of ports, either \emph{input} or \emph{output}; some private variables; and a series of \emph{ordered} transitions.
+
+Essentially, behavior of a channel is encoded as a set of \emph{guarded transitions}. 
+
+Before introducing the formal grammar of channels, we present a simple example here.
+
+% \begin{example}[Asynchronous Buffer Channel].
+
+% \end{example}
+
+% \begin{lstlisting}
+% channel <type T, int n> FIFO1 (in A T, out B T)
+%     variables
+%         buf (T | EMPTY) init EMPTY;
+%     end variables
+
+%     transitions
+%         buf != EMPTY ->
+%             A.reqRead, B.reqWrite := false, true;
+%         buf == EMPTY ->
+%             A.reqRead, B.reqWrite := true, false;
+
+%         A.reqWrite && buf == EMPTY ->
+%         begin
+%             perform A;
+%             buf := A;
+%         end
+
+%         B.reqRead && buf != EMPTY ->
+%         begin
+%             B := buf;
+%             buf := EMPTY;
+%             perform B;
+%         end
+%     end transitions
+% end channel
+% \end{lstlisting}
+
+\begin{bnf}
+    \ntsym{channel} & ::= & \tsym{channel}[\ntsym{params}]\ntsym{identifier} \stsym{(} \ntsym{ports} \stsym{)}\\
+    & & \ntsym{variables} \ntsym{transitions} \tsym{end channel} \\
+    \ntsym{ports} & ::= & (\ntsym{porttype} \ntsym{identifier})^+ \\
+    \ntsym{porttype} & ::= & (\tsym{in}|\tsym{out}) \ntsym{type} \\
+\end{bnf}
+
+Templates make it able to create a family of similar channels with a single definition. That is, we are able to declare a set of parameters in the channel's definition. And when creating channel instances, you have to specify concrete values to these parameters. A parameter here can be either a type identifier (decorated with prefix \textbf{type}), or a normal variable. 
+
+\begin{bnf}
+    \ntsym{params} & ::= & \stsym{[} \ntsym{param}^+\stsym{]} \\
+    \ntsym{param} & ::= & (\tsym{type} | \ntsym{type}) \ntsym{identifier}
+\end{bnf}
+
+\noindent \emph{Variables.} In the channel body, private variables can be declared in the \emph{variable} segement and used in the \emph{trnasition} segement. Unlike the parameters, all variables' declaration here must be followed with a initial value, which will be assigned to the variable when a \lang system starts its execution.
+
+\begin{bnf}
+    \ntsym{variables} & ::= & \tsym{variables} \\
+    & & (\ntsym{identifier} \ntsym{type} \tsym{init} \ntsym{term})^+ \\
+    & & \tsym{end variables}
+\end{bnf}
+
+\noindent \emph{Transitions.} A transition is a guarded command that is executed when 
+\begin{bnf}
+    \ntsym{transitions} & ::= & \tsym{transitions} \\
+    & & (\ntsym{transition}|\ntsym{group})^* \\
+    & & \tsym{end transitions} \\
+    \ntsym{transition} & ::= & \ntsym{term} \rightarrow \\
+    & & (\ntsym{statement} | \tsym{begin} \ntsym{statement}^+ \tsym{end})\\
+    \ntsym{statement} & ::= & \ntsym{identifier}^+\tsym{:=}\ntsym{term}^+\\
+    & | & \tsym{perform} \ntsym{identifier}^+ \\
+    \ntsym{group} & ::= & \tsym{group} \ntsym{transition}^+ \tsym{end group}
+\end{bnf}
+
+\subsection{Connectors}
+
+\begin{bnf}
+    \ntsym{connector} & ::= & \tsym{connector}[\ntsym{params}]\ntsym{identifier} \stsym{(} \ntsym{ports} \stsym{)} \\
+    & & [\ntsym{internal}] (\ntsym{connection})^+ \tsym{end connector} \\
+    \ntsym{interal} & ::= & \tsym{internal} (\ntsym{identifier})^+ \\
+    \ntsym{connection} & ::= & \ntsym{identifier} \tsym{(} \ntsym{identifier}^+ \tsym{)}
+\end{bnf}

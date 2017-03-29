@@ -1,0 +1,52 @@
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+\lstdefinelanguage{newlang}{
+    keywords = {
+        channel,
+        connector,
+        type,
+        in, out,
+        variables, transitions,
+        internal,
+        begin, end,
+        init
+    },
+    alsodigit = {-}
+}
+
+\lstset{
+    basicstyle=\footnotesize\ttfamily, 
+    numbers=left,
+    numberstyle=\tiny,
+    columns=flexible,
+    numbersep=5pt,
+    tabsize=2,
+    extendedchars=true,         %
+    breaklines=true,
+    keywordstyle=\color{red},
+    stringstyle=\color{white}\ttfamily, % Farbe der String
+    xleftmargin=17pt,
+    framexleftmargin=17pt,
+    framexrightmargin=5pt,
+    framexbottommargin=4pt,
+    % backgroundcolor=\color{lightgray},
+    showstringspaces=false,
+    language=newlang
+}
+
+% terminal symbols
+\newcommand{\tsym}[1]{\:\mbox{\textbf{#1}}\:}
+% slim terminal symbols, to save more space ...
+\newcommand{\stsym}[1]{\mbox{\textbf{#1}}}
+% non-terminal symbols
+\newcommand{\ntsym}[1]{\:\langle\mbox{\emph{#1}}\rangle\:}
+
+\newenvironment{bnf}{%
+    \vspace{-0.5em}
+    \begin{small}\begin{eqnarray*}
+}{%
+    \end{eqnarray*}\end{small}
+    \vspace{-1em}
+}
