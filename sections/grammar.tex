@@ -7,10 +7,9 @@ Let's introduce the overview of this language first.
 
 \begin{bnf}
     \ntsym{program} &::= & [\ntsym{statement}]^* \\
-    \ntsym{statement} &::=& \ntsym{packageRequirement} \\
-    &|& \ntsym{channel} \\
-    &|& \ntsym{component} \\
-    &|& \ntsym{connector} \\
+    \ntsym{statement} &::=& \ntsym{importStmt} | \ntsym{typedefStmt} | \ntsym{functionStmt} \\
+    &|& \ntsym{channelStmt} | \ntsym{componentStmt} \\
+    &|& \ntsym{connectorStmt} \\
 \end{bnf}
 
 \subsection{Type System}
@@ -18,44 +17,103 @@ Let's introduce the overview of this language first.
 The basic idea behind this type system is that we try to satisfy both researchers and programmers.
 
 \begin{bnf}
-    \ntsym{primitiveType} &::= & \tsym{int}[\ntsym{termint}\tsym{..}\ntsym{termint}] \\
-    & | & \tsym{float} | \tsym{char} | \tsym{bool}\\
-    & | & \tsym{enum \{} \ntsym{identifier}^+\tsym{\}}\\ 
-    \ntsym{type} &::= & \ntsym{rawtype} \\
+    \ntsym{primitiveType} &::= & \tsym{int}[\ntsym{term}\tsym{..}\ntsym{term}] \\
+    & | & \tsym{double} | \tsym{char} | \tsym{bool} | \tsym{NULL} \\
+    & | & \tsym{enum} {\{} \ntsym{identifier}^+\tsym{\}} \\ 
     & | & \ntsym{identifier} \\
-    & | & \tsym{array} \ntsym{type} \tsym{[} \ntsym{termint} \tsym{]}\\
-    & | & \tsym{map} \tsym{[} \ntsym{type}\tsym{]} \ntsym{type}\\
+    \ntsym{extendedType} &::= & \ntsym{primitiveType} \\
+    & | & \ntsym{type} \tsym{$|$} \ntsym{type} \\
+    & | & \tsym{array} \ntsym{extendedType} \tsym{[} \ntsym{term} \tsym{]}\\
+    & | & \tsym{map} \tsym{[} \ntsym{extendedType}\tsym{]} \ntsym{type}\\
     & | & \tsym{struct} \tsym{\{} (\ntsym{identifier} \tsym{:} \ntsym{type})^+ \tsym{\}}\\
 \end{bnf}
 
 % TODO is raw type a common name ? needs some googling
 
-\noindent\emph{Basic Type.} \lang has four built-in basic types, they are:
-\begin{description}
-    \item[Int.]  Two types of integers are 
-    \item[Float.] 
-    \item[Bool.]
-    \item[Enum.]
-\end{description}
+\begin{definition}[Finite Types]
+    A type in \lang{} is \emph{finite} iff. it has a finite value domain.
+\end{definition}
 
-\noindent\emph{Extended Type.} Extended type offers an approach to contruct complex data types through the primitive ones. Three extended types are introduced as follows:
-\begin{description}
-    \item[Array.] An \emph{array }$T$[n] is a finite ordered collection containing exactly $n$ elements of type $T$.
-    \item[Map.] A \emph{map }[$T_{key}$] $T_{val}$ is a dictionary that maps a key of type $T_{key}$ to a value of type $T_{val}$
-    \item[Struct.] A \emph{struct }\{$id_1:T_1,\cdots,id_n:T_n$\} contain $n$ fields, each has a particular type $T_i$ and a unique identifier $id_i$.
-\end{description}
+
+\noindent\emph{Primitive Type.} \lang{} provides built-in support for common primitive types, they are,
+\begin{itemize}
+    \item \emph{Int}. Similar to  
+    \item \emph{Double.}
+    \item \emph{Bool.} Boolean variables.
+    \item \emph{Enum.} An \emph{enumeration} is a finite collection of unique identifiers.
+    \item \emph{NULL.} For simplicity, in \lang{} we don't have pointers references, however, sometimes an empty value is strongly required to denote uninitialized value. Consequently, we define a single-value type NULL, of which the only possible value is \emph{null}.
+\end{itemize}
+
+\noindent\emph{Extended Type.} Extended type offers an approach to contruct complex data types with simpler ones. Four extending patterns are introduced as follows,
+\begin{itemize}
+    \item \emph{Union}. The \emph{union} operator `$|$' is designed to combine two \emph{disjoint} types as a more complicated one. This is similar to the union type in C language but much easier to use.
+    \item \emph{Array} and \emph{Slice}. An \emph{array} $T$[n] is a finite ordered collection containing exactly $n$ elements of type $T$. Moreover, a \emph{slice} is an array of which the capacity is not specified.
+    \item \emph{Map}. A \emph{map }[$T_{key}$] $T_{val}$ is a dictionary that maps a key of type $T_{key}$ to a value of type $T_{val}$.
+    \item \emph{Struct}. A \emph{struct }\{$field_1:T_1,\cdots,field_n:T_n$\} contain $n$ fields, each has a particular type $T_i$ and a unique identifier $id_i$.
+\end{itemize}
 
 Type systems often differ greatly between formal models and real-world programming languages. For example, PRISM\cite{KwiatkowskaCav2011}, ..
 
 % TODO: in popular standards, a system may contains different safety/security level. 
 
-\begin{definition}[Finite Types]
-    A type in \lang is \emph{finite} iff. it has a finite value domain.
-\end{definition}
-
 In \lang's type system, most of basic types are finite except for the unlimited integers and doubles. Besides, extended types are also finite if they are based on finite ones.
 
-\subsection {Channels}
+% typing rules
+
+\begin{definition}[Subtyping]
+    Type $T_1$ is a subtype of $T_2$, denoted by $T_1\subtype
+ T_2$, iff. a value of type $T_1$ can be converted to a value of type $T_2$ losslessly.
+\end{definition}
+
+\begin{mathpar}
+    \inferrule* [right=S-FiniteInt] {l_1,u_1,l_2,u_2 \in \mathbb{Z}, l_1\leq u_1\land l_2\geq u_2}{\mbox{int $l_1$ .. $u_1$} \subtype \mbox{int $l_2$ .. $u_2$}} \\
+    \inferrule* [right=S-Enum] {n \in \mathbb{Z}}{\mbox{enun \{ $item_0,\cdots,item_{n-1}$\}} \subtype \mbox{int 0 .. (n - 1)}} \\
+    \inferrule* [right=S-Bool] {.}{\mbox{bool} \subtype \mbox{int 0 .. 1}} \\
+    \inferrule* [right=S-Int] {l,u \in \mathbb{Z}}{\mbox{int $l$ .. $u$} \subtype \mbox{int}}\\
+    \inferrule* [right=S-Union] {T_1\subtype T_3, T_2\subtype T_4}{T_1 | T_2 \subtype T_3 | T_4 } \\
+\end{mathpar}
+
+\begin{definition}[Abstract and Concrete Types]
+    The types which have default values specified are called concrete types. And on contrary, those without default values are termed abstract types.
+\end{definition}
+\begin{bnf}
+    \ntsym{concreteType} & ::= & \ntsym{extendedType} \tsym{init} \ntsym{term}
+\end{bnf}
+
+In most programming languages, a non-reference type has a built-in default value. However, such values are not specified by programmers, and sometimes may lead to unexpected behavior.
+
+\subsection{Terms}
+
+\begin{bnf}
+    \ntsym{term} &::=& \ntsym{termPrimitive} \\
+    &|& \ntsym{term} \tsym{+} \ntsym{term} | \ntsym{term} \tsym{-} \ntsym{term} \\
+    &|& \ntsym{term} \tsym{*} \ntsym{term} | \ntsym{term} \tsym{/} \ntsym{term} \\
+    &|& \tsym{!} \ntsym{term} \\
+    &|& \ntsym{identifier} \tsym{(} \ntsym{term}^* \tsym{)} \\
+    &|& \ntsym{term} \tsym{[} \ntsym{term} \tsym{]} \\
+    &|& \ntsym{term} \tsym{.} \ntsym{identifier} \\
+\end{bnf}
+
+\begin{mathpar}
+    \inferrule* [right=T-Call]{t_1:T_1,\cdots,t_n,T_n,f:T_1\rightarrow \cdots T_n\rightarrow T}{f(t_1,\cdots,t_n):T} \\
+    \inferrule* [right=T-Array]{t_{arr}:T\:[n],0\leq i<n}{t_{arr}[i]:T} \\
+    \inferrule* [right=T-Slice]{t_{slice}:T\:[\:],0\leq i< len(t_{slice})}{t_{slice}[i]:T} \\
+    \inferrule* [right=T-Map]{t_{map}:\mbox{map }[T_1]\:T_2,t_{key}:T_1}{t_{map}[t_{key}]:T_2}\\
+    \inferrule* [right=T-struct]{t_{struct}:\mbox{struct }\{field_1:T_1,\cdots,field_n:T_n\},1\leq i\leq n}{t_{struct}.field_{i}:T_i}
+\end{mathpar}
+
+Rules of operators (e.g. $+,-,*$) are not presented here. That's mainly due their abstract nature. In \lang{}, native semantics of numeric operators are absent on syntax level. In other words, we have to manually override these operators as functions, for example.
+
+\begin{example}[Operator Overriding]
+    \begin{lstlisting}
+native function operatorAdd (a:int,b:int):int;
+native function <l1:int,l2:int,u1:int,u2:int> operatorAdd(a:int l1 .. u1, b:int l2 .. u2) : int (l1 + l2) .. (u1 + u2);
+    \end{lstlisting}
+\end{example}
+
+% TODO: note that in the rules there some logic formulas. in practice, these formulas needs to be derived from guard conditions or else
+
+\subsection{Channels and Components}
 
 Channels are the atomic functional units in our language. A channel compries several parameters; a set of ports, either \emph{input} or \emph{output}; some private variables; and a series of \emph{ordered} transitions.
 
@@ -96,25 +154,22 @@ Before introducing the formal grammar of channels, we present a simple example h
 % \end{lstlisting}
 
 \begin{bnf}
-    \ntsym{channel} & ::= & \tsym{channel}[\ntsym{params}]\ntsym{identifier} \stsym{(} \ntsym{ports} \stsym{)}\\
-    & & \ntsym{variables} \ntsym{transitions} \tsym{end channel} \\
-    \ntsym{ports} & ::= & (\ntsym{porttype} \ntsym{identifier})^+ \\
-    \ntsym{porttype} & ::= & (\tsym{in}|\tsym{out}) \ntsym{type} \\
+    \ntsym{channel} & ::= & \tsym{channel}[\ntsym{template}]\ntsym{identifier} \stsym{(} \ntsym{port}^* \stsym{)}\\
+    & & \tsym{\{} \ntsym{variables} \ntsym{transitions} \tsym{\}} \\
+    \ntsym{port} & ::= & \ntsym{identifier} \tsym{:} (\tsym{in}|\tsym{out}) \ntsym{type} \\
 \end{bnf}
 
 Templates make it able to create a family of similar channels with a single definition. That is, we are able to declare a set of parameters in the channel's definition. And when creating channel instances, you have to specify concrete values to these parameters. A parameter here can be either a type identifier (decorated with prefix \textbf{type}), or a normal variable. 
 
 \begin{bnf}
-    \ntsym{params} & ::= & \stsym{[} \ntsym{param}^+\stsym{]} \\
+    \ntsym{template} & ::= & \tsym{$\langle$} \ntsym{param}^+ \tsym{$\rangle$} \\
     \ntsym{param} & ::= & (\tsym{type} | \ntsym{type}) \ntsym{identifier}
 \end{bnf}
 
-\noindent \emph{Variables.} In the channel body, private variables can be declared in the \emph{variable} segement and used in the \emph{trnasition} segement. Unlike the parameters, all variables' declaration here must be followed with a initial value, which will be assigned to the variable when a \lang system starts its execution.
+\noindent \emph{Variables.} Local variables can be declared in the \emph{variables} segement, and referenced in the \emph{trnasitions} segement. 
 
 \begin{bnf}
-    \ntsym{variables} & ::= & \tsym{variables} \\
-    & & (\ntsym{identifier} \ntsym{type} \tsym{init} \ntsym{term})^+ \\
-    & & \tsym{end variables}
+    \ntsym{variables} & ::= & \tsym{variables} \tsym{\{} (\ntsym{identifier} \ntsym{type} [\tsym{init} \ntsym{term}])^* \tsym{\}}
 \end{bnf}
 
 \noindent \emph{Transitions.} A transition is a guarded command that is executed when 

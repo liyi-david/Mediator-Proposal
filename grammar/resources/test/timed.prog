@@ -1,0 +1,41 @@
+import basic;
+
+# an abstract type
+typedef double as abstype;
+# a concrete type
+typedef double init 0 as clock;
+
+typedef double as Symbolic;
+
+# an abstract data type
+typedef struct {
+    X : double,
+    Y : duble
+} as Pos;
+
+typedef struct {
+    val : double,
+    deriv : Symbolic
+} as continuous;
+
+function operatorMinus(A:T, B:T) : T ;
+
+function operatorAdd(A:T, B:T) : T {
+    C := A - B;
+    D := C + A * B;
+    return D;
+} meta {
+    time : double init 0.1 ;
+}
+
+
+connector <T:type> Conn(A: in T, B: out T) {
+    internals C;
+    connections {
+        Pkg::Sync(A,C);
+        Pkg2::Fifo1(C,B);
+    }
+} meta {
+    position : Pos init { X : 0.0, Y : 0.0 } ;
+    property : Symbolic [] init [x+1 < 2, y+2<10] ;
+}

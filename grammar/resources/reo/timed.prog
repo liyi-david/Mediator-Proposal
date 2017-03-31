@@ -1,0 +1,39 @@
+native typedef double init 0 as clock;
+
+typedef enum { timeout } as signal;
+
+# the timer is asynchronous
+channel <T:type,t:double> timer (A: in T, B: out signal) {
+    variables {
+        flag : enum { idle, waiting } init idle;
+        c : clock;
+    }
+
+    transitions {
+        
+        (flag == flag.idle) -> A.reqRead, B.reqWrite := true, false ;
+        (flag == flag.waiting) -> A.reqRead := false ;
+        (flag == flag.waiting && c >= t) -> B.reqWrite := true ;
+        (true && c < t) -> B.reqWrite := false ;
+
+        (flag == flag.idle && A.reqWrite) -> {
+            perform A;
+            c := 0;
+            flag := flag.waiting;
+        }
+
+        (flag == flag.waiting && c >= t && B.reqRead) -> {
+            B := signal.timeout ;
+            perform B;
+            flag := flag.idle ;
+        } meta {
+            timecost : double init 0.1;
+        }
+
+        # 中文支持？
+        (flag == flag.waiting && c >= t && !B.reqRead) -> {
+            flag := flag.idle ;
+        }
+        
+    }
+}

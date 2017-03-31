@@ -1,0 +1,1 @@
+native function <l1:int,l2:int,u1:int,u2:int> operatorAdd(a:int l1 .. u1, b:int l2 .. u2) : int (l1 + l2) .. (u1 + u2);

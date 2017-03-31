@@ -1,0 +1,46 @@
+import a.b;
+import c.d.*;
+import a as NameA;
+import d as .;
+
+
+# this is a channel
+
+
+channel <T:type,b:T> TestChn (A: in T, B: out T, C: out T) {
+    variables {
+        a : int init 0.1;
+        tc : char init 'a';
+        b : int 0 .. (10 + 1) init 0.01;
+        c : double init true;
+        d : enum { red, blue } init 9;
+
+        arrs : int [] init 0;
+        
+        darr : enum { red, blue } [20] init [red, blue, red] ;
+        emqpc : map [int] double init { 1 => 0.1, 2 => 0.2 } ;
+        struc : struct {
+            x : int,
+            y : double
+        } init { x : 1, y : 2 } ;
+        
+    }
+    transitions {  }
+}
+
+channel <T:type> Sync (A: in T, B: out T) {
+    transitions {
+        (B.reqRead) -> A.reqRead := true;
+        
+        (!B.reqRead) -> A.reqRead := false;
+        (A.reqWrite) -> B.reqWrite := true;
+        (!A.reqWrite) -> B.reqWrite := false;
+        
+
+        (A.reqWrite && Pkg.func(B.reqRead)) -> {
+            perform A;
+            B[A] := A;
+            perform B;
+        }
+    }
+}

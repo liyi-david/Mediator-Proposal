@@ -1,6 +1,9 @@
 \usepackage{listings}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{mathpartir}
 
 \lstdefinelanguage{newlang}{
     keywords = {
@@ -19,7 +22,7 @@
 \lstset{
     basicstyle=\footnotesize\ttfamily, 
     numbers=left,
-    numberstyle=\tiny,
+    numberstyle=\scriptsize,
     columns=flexible,
     numbersep=5pt,
     tabsize=2,
@@ -37,7 +40,7 @@
 }
 
 % terminal symbols
-\newcommand{\tsym}[1]{\:\mbox{\textbf{#1}}\:}
+\newcommand{\tsym}[1]{\:\mbox{`\textbf{#1}'}\:}
 % slim terminal symbols, to save more space ...
 \newcommand{\stsym}[1]{\mbox{\textbf{#1}}}
 % non-terminal symbols
@@ -50,3 +53,5 @@
     \end{eqnarray*}\end{small}
     \vspace{-1em}
 }
+
+\newcommand{\subtype}[0]{\preccurlyeq}

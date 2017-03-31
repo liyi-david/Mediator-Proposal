@@ -1,0 +1,240 @@
+-- entrypoints Term;
+entrypoints Program ;
+
+-- Overview
+
+    ProgramContainer.                   Program                                 ::= [Statement] ;
+
+    StatementLineContainer.             Statement                               ::= StatementLine ";" ;
+    StatementBlockContainer.            Statement                               ::= StatementBlock ;
+
+
+-- Section 1. package statements
+
+    StatementImportContainer.           StatementLine                           ::= StatementImport ;
+    StatementImportBasic.               StatementImport                         ::= "import" PackagePath ;
+    StatementImportWithRenaming.        StatementImport                         ::= "import" PackagePath "as" Ident ;
+    StatementImportToPath.              StatementImport                         ::= "import" PackagePath "as" "." ;
+
+    PackagePathAll.                     PackagePath                             ::= "*";
+    PackagePathFolder.                  PackagePath                             ::= Ident "." PackagePath;
+    PackagePathFile.                    PackagePath                             ::= Ident;
+
+-- Section 2. Type Systems
+    
+    TypeUnion.                          Type                                    ::= Type "|" Type1 ;
+    TypeArray.                          Type1                                   ::= Type2 "[" Term9 "]" ;
+    TypeSlice.                          Type1                                   ::= Type2 "[" "]" ;
+
+    TypeMap.                            Type2                                   ::= "map" "[" Type "]" Type3 ;
+    TypeStruct.                         Type2                                   ::= "struct" "{" [Field] "}" ;
+
+    TypePrimitiveInteger.               Type3                                   ::= "int" ;
+    TypePrimitiveFiniteInteger.         Type3                                   ::= "int" Term9 ".." Term9 ;
+    TypePrimitiveDouble.                Type3                                   ::= "double" ;
+    TypePrimitiveBoolean.               Type3                                   ::= "bool" ;
+    TypePrimitiveChar.                  Type3                                   ::= "char" ;
+    TypePrimitiveEnum.                  Type3                                   ::= "enum" "{" [Ident] "}" ;
+    TypePrimitiveAlias.                 Type3                                   ::= NamespacedIdent ;
+    TypePrimitiveNull.                  Type3                                   ::= "NULL" ;
+
+    _.                                  Type                                    ::= Type1;
+    _.                                  Type1                                   ::= Type2;
+    _.                                  Type2                                   ::= Type3;
+    _.                                  Type3                                   ::= "(" Type ")";
+
+    
+
+    -- variables declarations
+
+    VariableWithInit.                   Variable                                ::= Ident ":" Type "init" Term ;
+    VariableUntyped.                    Variable                                ::= Ident "init" Term ;
+
+    -- we assume that a concrete type is provided in the following syntax
+
+    VariableWithoutInit.                Variable                                ::= Ident ":" Type ;
+
+    FieldItem.                          Field                                   ::= Ident ":" Type ;
+
+    -- values of basic types
+
+    ValueBooleanTrue.                   ValueBoolean                            ::= "true" ;
+    ValueBooleanFalse.                  ValueBoolean                            ::= "false" ;
+
+    -- term definitions
+    -- from lower precedence level to higher precedence level
+
+    TermObjArray.                       Term                                    ::= "[" [Term] "]" ;
+    TermObjMap.                         Term                                    ::= "{" [TermExtendedMapItem] "}" ;
+    TermObjStruct.                      Term                                    ::= "{" [TermExtendedStructField] "}" ;
+
+    TermOprCondition.                   Term                                    ::= Term "?" Term1 ":" Term2 ;
+
+    TermOprLogicOr.                     Term1                                   ::= Term1 "||" Term2 ;
+    TermOprLogicAnd.                    Term2                                   ::= Term2 "&&" Term3 ;
+
+    TermOprCompareEq.                   Term3                                   ::= Term3 "==" Term4 ;
+    TermOprCompareNeq.                  Term3                                   ::= Term3 "!=" Term4 ;
+
+    TermOprCompareLt.                   Term4                                   ::= Term4 "<" Term5 ;
+    TermOprCompareGt.                   Term4                                   ::= Term4 ">" Term5 ;
+    TermOprCompareLeq.                  Term4                                   ::= Term4 "<=" Term5 ;
+    TermOprCompareGeq.                  Term4                                   ::= Term4 ">=" Term5 ;
+
+    TermOprCalcPlus.                    Term5                                   ::= Term5 "+"  Term6 ;
+    TermOprCalcMinus.                   Term5                                   ::= Term5 "-"  Term6 ;
+
+    TermOprCalcTimes.                   Term6                                   ::= Term6 "*"  Term7 ;
+    TermOprCalcDivide.                  Term6                                   ::= Term6 "/"  Term7 ;
+    TermOprCalcMode.                    Term6                                   ::= Term6 "%"  Term7 ;
+
+    TermOprPow.                         Term7                                   ::= Term7 "**" Term8 ;
+
+    TermOprUnary.                       Term8                                   ::= UnaryOperator Term9 ;
+    
+    -- works for structure and enum
+    TermGetField.                       Term9                                   ::= Term9 "." Ident ;
+    -- works for array, slice and map
+    TermGetElement.                     Term9                                   ::= Term9 "[" Term "]" ;
+    
+    TermFunctionCall.                   Term9                                   ::= NamespacedIdent "(" [Term5] ")";
+
+    TermPrimitiveInteger.               Term10                                  ::= Integer ;
+    TermPrimitiveBoolean.               Term10                                  ::= ValueBoolean ;
+    TermPrimitiveDouble.                Term10                                  ::= Double ;
+    TermPrimitiveChar.                  Term10                                  ::= Char ;
+    TermPrimitiveNull.                  Term10                                  ::= "null" ;
+    TermPrimitiveIdent.                 Term10                                  ::= NamespacedIdent ;
+    TermExtendedString.                 Term10                                  ::= String ;
+
+
+    _.                                  Term                                    ::= Term1 ;
+    _.                                  Term1                                   ::= Term2 ;
+    _.                                  Term2                                   ::= Term3 ;
+    _.                                  Term3                                   ::= Term4 ;
+    _.                                  Term4                                   ::= Term5 ;
+    _.                                  Term5                                   ::= Term6 ;
+    _.                                  Term6                                   ::= Term7 ;
+    _.                                  Term7                                   ::= Term8 ;
+    _.                                  Term8                                   ::= Term9 ;
+    _.                                  Term9                                   ::= Term10 ;
+    _.                                  Term10                                  ::= "(" Term ")" ;
+
+
+    TermExtendedMapItemDesc.            TermExtendedMapItem                     ::= Term "=>" Term ;
+    TermExtendedStructFieldDesc.        TermExtendedStructField                 ::= Ident ":" Term ;
+
+
+-- Section 3. Type Alias (Typedef)
+
+    TypedefStatementContainer.          StatementLine                           ::= TypedefStatement ;
+
+    TypedefStatementNative.             TypedefStatement                        ::= "native" TypedefStatementBasic ;
+    TypedefStatementAlias.              TypedefStatement                        ::= TypedefStatementBasic ;
+    TypedefStatementAbstract.           TypedefStatementBasic                   ::= "typedef" Type "as" Ident ;
+    TypedefStatementConcrete.           TypedefStatementBasic                   ::= "typedef" Type "init" Term "as" Ident ;
+
+-- Section 4. Meta Information
+
+    MetaInformationGlobal.              StatementBlock                          ::= "meta" "{" [Variable] "}" ;
+
+    MetaInformationEmpty.               MetaInformation                         ::= ;
+    MetaInformationContainer.           MetaInformation                         ::= "meta" "{" [Variable] "}" ;
+
+-- Section 5. Function Definitions / Delcarations
+
+    StatementFunctionNative.            StatementLine                           ::= "native" "function" InterfaceFunction MetaInformation ;
+    StatementFunction.                  StatementBlock                          ::= "function" InterfaceFunction "{" BodyFunction "}" MetaInformation ;
+                    
+    InterfaceFunctionNonTemplated.      InterfaceFunction                       ::= Ident "(" [Field] ")" ":" Type ;
+    InterfaceFunctionTemplated.         InterfaceFunction                       ::= "<" [Template] ">" Ident "(" [Field] ")" ":" Type;
+                    
+    TemplatesFunctionContainer.         TemplatesFunction                       ::= [Ident] ;
+                    
+    BodyFunctionContainer.              BodyFunction                            ::= [CommandFunction] ;
+                    
+    CommandFunctionAssignment.          CommandFunction                         ::= [Term] ":=" [Term] ;
+    CommandFunctionReturn.              CommandFunction                         ::= "return" Term ;
+
+    
+
+-- Section 4. Channels
+
+    StatementChannel.                   StatementBlock                          ::= "channel" Interface "{" SemanticsBody "}" MetaInformation;
+
+    InterfaceNonTemplated.              Interface                               ::= Ident "(" [Port] ")" ;
+    InterfaceTemplated.                 Interface                               ::= "<" [Template] ">" Ident "(" [Port] ")" ;
+
+    PortTypeIn.                         PortType                                ::= "in" ;
+    PortTypeOut.                        PortType                                ::= "out" ;
+
+    PortDeclaration.                    Port                                    ::= Ident ":" PortType Type ;
+
+    TemplateType.                       Template                                ::= Ident ":" "type";
+    TemplateVariable.                   Template                                ::= Ident ":" Type;
+
+    SemanticsBodyNoVariables.           SemanticsBody                           ::= "transitions" "{" [GuardedCommand] "}";
+    SemanticsBodyWithVariables.         SemanticsBody                           ::= "variables" "{" [Variable] "}"
+                                                                                      "transitions" "{" [GuardedCommand] "}";
+                                                                                  
+    GuardedCommandLine.                 GuardedCommand                          ::= Term9 "->" Command ";" ;
+    GuardedCommandBlock.                GuardedCommand                          ::= Term9 "->" "{" [Command] "}" MetaInformation;
+    UnguardedCommandLine.               GuardedCommand                          ::= "_" "->" Command ";" ;
+    UnguardedCommandBlock.              GuardedCommand                          ::= "_" "->" "{" [Command] "}" MetaInformation;
+
+    CommandAssignment.                  Command                                 ::= [Term5] ":=" [Term5] ;
+    CommandPerform.                     Command                                 ::= "perform" Ident ;
+
+    
+
+-- Section 5. Connectors
+
+    StatementConnector.                 StatementBlock                          ::= "connector" Interface "{" CompositionBody "}" MetaInformation;
+
+    CompositionBodyNoInternals.         CompositionBody                         ::= "connections" "{" [Connection] "}";
+    CompositionBodyWithInternals.       CompositionBody                         ::= "internals" [Ident] ";" "connections" "{" [Connection] "}";
+
+
+    ConnectionNonTemplated.             Connection                              ::= NamespacedIdent "(" [Ident] ")" MetaInformation ;
+    ConnectionTemplated.                Connection                              ::= NamespacedIdent "<" [Term5] ">" "(" [Ident] ")" MetaInformation ;
+
+-- Section 6. Components
+
+    StatementComponent.                 StatementBlock                          ::= "component" Interface "{" SemanticsBody "}" MetaInformation ;
+    StatementComponentNative.           StatementLine                           ::= "native" "component" Interface MetaInformation ;
+
+
+-- Appendix
+-- A. Commonly Used Tokens
+
+    NamespacedIdentInPath.              NamespacedIdent                         ::= Ident ;
+    NamespacedIdentInNamespace.         NamespacedIdent                         ::= NamespacedIdent "." Ident ;
+
+
+    comment "#" ;
+    comment "#-" "-#" ;
+
+-- B. Operators
+
+    UnaryOperatorLogicNot.              UnaryOperator                           ::= "!" ;
+    UnaryOperatorNegative.              UnaryOperator                           ::= "-" ;
+    UnaryOperatorPositive.              UnaryOperator                           ::= "+" ;
+
+-- C. Lists
+
+    terminator              Variable                ";" ;
+    terminator              CommandFunction         ";" ;
+    terminator              Statement               "" ;
+    terminator              Command                 ";" ;
+    terminator              GuardedCommand          "" ;
+    terminator              Connection              ";" ;
+
+    separator               Field                   "," ;
+    separator               TermExtendedMapItem     "," ;
+    separator               TermExtendedStructField "," ;
+    separator               Term                    "," ;
+    separator               Term5                   "," ;
+    separator               Port                    "," ;
+    separator   nonempty    Template                "," ;
+    separator   nonempty    Ident                   "," ;
+    separator   nonempty    NamespacedIdent         "," ;
