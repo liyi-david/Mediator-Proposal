@@ -98,6 +98,7 @@ entrypoints Program ;
     TermGetElement.                     Term9                                   ::= Term9 "[" Term "]" ;
     
     TermFunctionCall.                   Term9                                   ::= NamespacedIdent "(" [Term5] ")";
+    TermTypeCast.                       Term9                                   ::= "(" Type ")" Term10 ;
 
     TermPrimitiveInteger.               Term10                                  ::= Integer ;
     TermPrimitiveBoolean.               Term10                                  ::= ValueBoolean ;
@@ -160,7 +161,7 @@ entrypoints Program ;
 
 -- Section 4. Channels
 
-    StatementChannel.                   StatementBlock                          ::= "channel" Interface "{" SemanticsBody "}" MetaInformation;
+    StatementChannel.                   StatementBlock                          ::= "channel" Interface "{" [SemanticsBody] "}" MetaInformation;
 
     InterfaceNonTemplated.              Interface                               ::= Ident "(" [Port] ")" ;
     InterfaceTemplated.                 Interface                               ::= "<" [Template] ">" Ident "(" [Port] ")" ;
@@ -173,9 +174,12 @@ entrypoints Program ;
     TemplateType.                       Template                                ::= Ident ":" "type";
     TemplateVariable.                   Template                                ::= Ident ":" Type;
 
-    SemanticsBodyNoVariables.           SemanticsBody                           ::= "transitions" "{" [GuardedCommand] "}";
-    SemanticsBodyWithVariables.         SemanticsBody                           ::= "variables" "{" [Variable] "}"
-                                                                                      "transitions" "{" [GuardedCommand] "}";
+    SemanticsBodyTransitions.           SemanticsBody                           ::= "transitions" "{" [GuardedBehavior] "}";
+    SemanticsBodyVariables.             SemanticsBody                           ::= "variables" "{" [Variable] "}" ;
+    SemanticsBodyTypedef.               SemanticsBody                           ::= TypedefStatementBasic ";" ;
+
+    GuardedCommandSingle.               GuardedBehavior                         ::= GuardedCommand ;
+    GuardedCommandGroup.                GuardedBehavior                         ::= "group" "{" [GuardedCommand] "}" ;
                                                                                   
     GuardedCommandLine.                 GuardedCommand                          ::= Term9 "->" Command ";" ;
     GuardedCommandBlock.                GuardedCommand                          ::= Term9 "->" "{" [Command] "}" MetaInformation;
@@ -226,8 +230,10 @@ entrypoints Program ;
     terminator              CommandFunction         ";" ;
     terminator              Statement               "" ;
     terminator              Command                 ";" ;
+    terminator              GuardedBehavior         "" ;
     terminator              GuardedCommand          "" ;
     terminator              Connection              ";" ;
+    terminator              SemanticsBody           "" ;
 
     separator               Field                   "," ;
     separator               TermExtendedMapItem     "," ;

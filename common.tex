@@ -4,6 +4,16 @@
 \usepackage{enumitem}
 \usepackage{amssymb}
 \usepackage{mathpartir}
+% \usepackage{pxfonts}
+\usepackage{fancybox}
+
+\makeatletter
+\newenvironment{CenteredBox}{% 
+\begin{Sbox}}{% Save the content in a box
+\end{Sbox}\centerline{\parbox{\wd\@Sbox}{\TheSbox}}}% And output it centered
+\makeatother
+
+\renewcommand{\ttdefault}{pxtt}
 
 \lstdefinelanguage{newlang}{
     keywords = {
@@ -14,7 +24,8 @@
         variables, transitions,
         internal,
         begin, end,
-        init
+        init,
+        perform, as
     },
     alsodigit = {-}
 }
@@ -24,11 +35,11 @@
     numbers=left,
     numberstyle=\scriptsize,
     columns=flexible,
-    numbersep=5pt,
+    numbersep=10pt,
     tabsize=2,
     extendedchars=true,         %
     breaklines=true,
-    keywordstyle=\color{red},
+    keywordstyle=\bfseries,
     stringstyle=\color{white}\ttfamily, % Farbe der String
     xleftmargin=17pt,
     framexleftmargin=17pt,

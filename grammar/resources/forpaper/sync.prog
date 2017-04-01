@@ -1,13 +1,5 @@
-typedef struct {
-    x: double,
-    y: double
-} as Position ;
-
-typedef char [] as string ;
-
 channel <T:type> Sync (A: in T, B: out T) {
     transitions {
-
         _ -> A.reqRead := B.reqRead ;
         _ -> B.reqWrite := A.reqWrite ;
 
@@ -16,6 +8,5 @@ channel <T:type> Sync (A: in T, B: out T) {
             B.value := A.value;
             perform B;
         }
-        
     }
 }

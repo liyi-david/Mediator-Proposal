@@ -1,4 +1,5 @@
 # this file is used to test the grammar files
+set -e
 
 case $1 in
     build)
@@ -10,7 +11,6 @@ case $1 in
         ;;
     parse)
         if [ "$2" = "ALL" ]; then
-            set -e
             for file in $(find ./grammar -name "*.prog"); do
                 grammar/target/TestSyntax $file
             done

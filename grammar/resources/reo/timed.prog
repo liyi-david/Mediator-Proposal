@@ -23,7 +23,7 @@ channel <T:type,t:double> timer (A: in T, B: out signal) {
         }
 
         (flag == flag.waiting && c >= t && B.reqRead) -> {
-            B := signal.timeout ;
+            B.value := signal.timeout ;
             perform B;
             flag := flag.idle ;
         } meta {
