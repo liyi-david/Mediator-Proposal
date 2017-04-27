@@ -1,0 +1,148 @@
+\section{Semantics}
+\label{sec:semantics}
+
+\subsection{Configurations of Automata}
+\label{subsec:config}
+% TODO: formalization of adjoint variables
+Configurations are used to represent the state of an automaton. Since we don't have locations here, it only depends on the values of its locally accessible variables, which includes both \emph{adjoint variables} and \emph{local variables}.
+
+\begin{definition}[Valuation]
+An evaluation of a set of variables $Vars$ is defined as a function $v$ that satisfies $\forall x\in Vars,v(x)\in Dom(type(x))$. We denote all the possible evaluations of a variable set $Vars$ as $Val(Vars)$.
+% TODO: how to say `without confusion`
+\end{definition}
+
+\begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. 
+\end{definition}
+
+\subsection{Canonical Form of Transitions}
+\label{subsec:canonical}
+
+% TODO: what features?
+% As mentioned before, transitions in an automaton have fantastic features to write simple but powerful models, including \emph{a) Priority}. In this subsection we introduce how these features work, and how to convert the rich-featured models to traditional ones.
+\begin{definition}[Canonical Transitions]
+A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is an interleaving sequence of assignments and performs which start from an assignment, e.g. \texttt{a:= exp$_1$; perform A; b:= exp$_2$; $\cdots$}.
+\end{definition}
+We only need to simple steps to canonicalize a transition, they are:
+\begin{enumerate}
+    \item Merging the contiguous assignments. As mentioned before, an assignment statement is represented as a function $f:EV\rightarrow EV$. Thus a list of multiple assignments $f_1,\cdots, f_n$ can be simplified by $f=f_1\circ\cdots \circ f_n$.
+    \item Any two adjacent performs should be separated by a identical assignment $id_{EV}$. 
+\end{enumerate}
+
+\smalltitle{Observable} A transition is always \emph{observable}, i.e. it will makes some difference to the context. For example, without this assumption, a transition \texttt{true -> x := x} will block the whole model by endless meaningless executions.
+
+\begin{definition}[Canonical Transition Groups]
+    A transition group is canonical iff. it only contains one canonical transition.
+\end{definition}
+
+\smalltitle{Priority} Given a set of ordered transitions.
+\[
+    \{g_1\rightarrow S_1,g_2\rightarrow S_2,\cdots,g_n\rightarrow S_n\}
+\]
+As required by the \emph{priority} assumption, a transition can be fired only if all the previous ones are not enabled (i.e. their guards are not satisfied) yet. In \lang{}, this feature is resolved simply by adding $\lnot g_i$ to all $g_j(j>i)$. E.g.
+\[
+    \{g_1\rightarrow S_1, g_2\land(\lnot g_1)\rightarrow S_2,\cdots,g_n\land(\lnot g_1\land \lnot g_2\land\cdots\land \lnot g_{n-1})\rightarrow S_n\}
+\]
+Now let's consider a set of ordered groups $t_{G_i}$, where $t_{G_i}$ contains $l_i$ transitions,
+\begin{small}
+\[
+    T_G=\{t_{G_1}=\{g_{11}\rightarrow S_{11},\cdots, g_{1l_1}\rightarrow S_{1l_1}\},\cdots,t_{G_n}=\{g_{n1}\rightarrow S_{n1},\cdots,g_{nl_n}\rightarrow S_{nl_n}\}\}
+\]
+\end{small}
+Informally speaking, once a transition in $t_{G_1}$ is enabled, all the other transitions in $t{G_i}(i>1)$ should be strictly prohibited from being fired. We use $enab(t_G)$ to denote the condition where at least one transition in $t_G$ is enabled, formalized as
+\[
+    enab(t_G=\{g_1\rightarrow S_1,\cdots, g_n\rightarrow S_n\}) = g_1\lor\cdots\lor g_n
+\]
+Then we can generate the new set of transitions with no dependency on priority:
+\begin{eqnarray*}
+    g_{11}\rightarrow S_{11},&\cdots&,g_{1l_1}\rightarrow S_{1l_1}, \\
+    g_{21}\land \lnot enab(t_{G_1})\rightarrow S_{21}, &\cdots&, g_{2l_2} \land \lnot enab(t_{G_1})\rightarrow S_{2l_2}, \cdots \\
+    g_{n1}\land \lnot enab(t_{G_1},\cdots,t_{G_{n-1}})\rightarrow S_{n1}, &\cdots&, g_{nl_n} \land \lnot enab(t_{G_1},\cdots,t_{G_{n-1}})\rightarrow S_{nl_n} \\
+\end{eqnarray*}
+where $enab(t_{G_1},\cdots,t_{G_{n-1}})$ is an abbreviation of $enab(t_{G_1})\lor\cdots\lor enab(t_{G_{n-1}})$. It indicates that at least one group in $t_{G_i}$ is enabled.
+\subsection{From System to Automaton}
+\label{subsec:composition}
+
+Systems, as shown previously, are simply introduced to construct automata in a more natural way. Now we show how such a system can be flatten as a standard automaton.
+
+% TODO: canonical form of a transition mus requires a interleaving form, may be filled
+% with non-sense assignments
+% TODO: topological sorting
+\begin{algorithm}[H]
+    \caption{Scheduling in a Synchronous Set of External Transitions}
+    \label{alg:synchronize}
+    \begin{algorithmic}[1]
+        \REQUIRE $t_1,t_2,\cdots,t_n$ are transitions (canonical form)
+        \ENSURE $t=\mbox{\texttt{Schedule}}(t_1,\cdots,t_n)$
+        \IF{$\{t_i\}$ don't belong to different automata or $\exists t_i$ is internal}
+            \STATE $t\leftarrow null$
+            \RETURN
+        \ENDIF
+        \STATE \emph{t.g, t.S} $\leftarrow \bigwedge_i t_i.g,\:\{\}$
+        \FOR{$i\leftarrow 1,\cdots,n$}
+            \IF {$t_i.s_1$ is an \emph{assignment}}
+            \STATE add $t_i.s_1$ to the head of $t.S$
+            \ENDIF
+            \STATE $p$ $\leftarrow$ the first \emph{perform} statement
+            \WHILE {$p$ $\neq$ \emph{null}}
+                \STATE $a\leftarrow$ the \emph{assignment} statement after $p$
+                \STATE $p'\leftarrow$ the next \emph{perform} statement after $p$
+                \IF {$p\in t.S$}
+                    \STATE insert $a$ to $t.S$ exactly after $p$
+                    \STATE remove $p$ from $t.S$
+                \ENDIF
+            \ENDWHILE
+        \ENDFOR
+        \STATE $t\leftarrow$ \texttt{Canonicalize($t$)}
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \caption{Compose Several Automatons}
+    \label{alg:compose}
+    \begin{algorithmic}[1]
+        \REQUIRE $A_1,A_2,\cdots,A_n$ are automata
+        \ENSURE $A=\mbox{\texttt{Compose}}(A_1,\cdots,A_n)$
+        \STATE rename local variables in $A_1,\cdots,A_n$ to avoid duplicated names
+        \STATE $A \leftarrow $ empty automaton
+        \STATE $ext\_trans\leftarrow \{\}$
+        \FOR{$i\leftarrow 1,2,\cdots,n$}
+            \STATE add all local variables of $A_i$ to $A$
+            \STATE add all internal transitions of $A_i$ to $A$
+            \STATE add all external transitions of $A_i$ to $ext\_trans$
+        \ENDFOR
+        \FOR{$set\_trans\leftarrow$ subset of $ext\_trans$}
+            \STATE $newedge\leftarrow \mbox{\texttt{Schedule}}(set\_trans)$ 
+            \IF{\emph{newedge $\neq$ null}}
+                \STATE add \emph{newedge} to $A$
+            \ENDIF
+        \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Automaton as Labelled Transition System}
+
+\begin{definition}[Transition System, TS]
+    A transition system is a tuple $(S,\rightarrow)$ where $S$ is a set of states and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reason, we use $s\rightarrow s'$ to denote $(s,s')$ in $\rightarrow$.
+\end{definition}
+
+Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics can be captured by a labelled transition system $\langle S_A, \rightarrow_A\rangle$ where
+\begin{itemize}
+    \item $S_A$ is the set of all configurations of $A$.
+    \item $\rightarrow_A\subseteq S_A\times \Sigma_A\times S_A$ is a set of transitions constructed by the following rules.
+\end{itemize}
+
+\begin{mathpar}
+    \inferrule* [right=R-InputStatus] {p\in P_{in}}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.reqWrite\mapsto \lnot p.reqWrite])} \\
+    \inferrule* [right=R-InputValue] {p\in P_{in}, val\in type(p.value)}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.value\mapsto val])} \\
+    \inferrule* [right=R-OutputStatus] {p\in P_{out}}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.reqRead\mapsto \lnot p.reqRead])} \\
+    \inferrule* [right=R-Internal] {\{g\rightarrow \{s\}\}\in Trans_G\mbox{ is internal}}{(v_{loc}, v_{adj})\xrightarrow{}_A s(v_{loc},v_{adj})} \\
+    \inferrule* [right=R-External] {\{g\rightarrow S\}\in Trans_G\mbox{ is external, } \{s_1,\cdots,s_n\}\mbox{ are the assignments in $S$}}{(v_{loc}, v_{adj})\xrightarrow{}_A s_n\circ\cdots\circ s_1(v_{loc},v_{adj})} \\
+\end{mathpar}
+
+The first three rules describe the potential change of context, i.e. the adjoint variables. R-InputStatus and R-OutputStatus shows that the reading status of an output port and status of an input port may changed randomly. And R-InputValue shows that the value of an input port may be updated by the context.
+
+The rule R-Internal models the internal transitions in $Trans_G$. As illustrated previously, an internal transition doesn't contains any perform statement. So its canonical form comprises only one assignment $s$. Firing such a transition will simply apply $s$ to the current configuration.
+
+Meanwhile, R-External models the external transitions, where the automaton need to interact with its context. Fortunately, since all the context change are captured by the first three rules, we can simply regard the context as a set of local variables. Consequently, the only difference between an internal transition and an external transitions is that the later may contains multiple assignments.
+
+%TODO: take queue as an example

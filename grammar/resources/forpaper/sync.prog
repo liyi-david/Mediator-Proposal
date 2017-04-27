@@ -1,4 +1,4 @@
-channel <T:type> Sync (A: in T, B: out T) {
+automaton <T:type> Sync (A: in T, B: out T) {
     transitions {
         _ -> A.reqRead := B.reqRead ;
         _ -> B.reqWrite := A.reqWrite ;
