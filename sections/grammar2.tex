@@ -150,8 +150,13 @@ A reasonable rule comes up that, both the \texttt{reqWrite} field of a input por
 
 When guard of a transition is satisfied by the context, we say the transition is \emph{activated}. However, being activated is only necessary condition of being fired. When choosing a transition to fire, we have to consider other criteria, which will be introduced later.
 
-Though not mentioned explicitly, transitions can be divided into two classes: \emph{external} and \emph{internal}. A transition is external iff. perform assignments are involved to model the interaction with environment. Hereinafter we use $g\rightarrow S$ to denote a transition, where $g$ is the guard formula and $S$ is the set of statements.
+Though not mentioned explicitly, transitions can be divided into two classes: \emph{external} and \emph{internal}. A transition is \emph{external} iff. perform assignments are involved. 
 
+\begin{formalization}[Transitions]
+Formally, we use $g\rightarrow S$ to denote a transition, where $g$ is the guard formula and $S=\{s_1,\cdots,s_n\}$ is a set of statements. 
+\end{formalization}
+
+Here we present an example to show how transitions are used to model the behavior of a queue.
 \begin{example}[Transitions in Queue] In a \texttt{Queue}, we use internal transitions to formalize the changes of its state. For example, becoming writable when buffer is not full, and readable when buffer is not empty. External transitions, on the other hand, mainly show how the read and write operations are performed.
 \begin{lstlisting}
 // Internal Transitions
@@ -174,19 +179,23 @@ All the transitions are supposed to have the following features. They are declar
 \begin{itemize}
     \item \emph{Alterative}. A transition won't be fired if it changes nothing in its context. For example, the first internal transition in a \texttt{Queue} will not be activated if \texttt{B.reqWrite} is already equal to \texttt{buf[ptail] != null}. This assumption is mainly used to avoid useless executions.
     \item \emph{Urgent}. In some formal models, e.g. CSP\cite{HoareCsp1985} and Timed Automata\cite{AlurTcs1994}, transitions may not be triggered even the guard is satisfied. On contrast, such behavior is strictly prohibited in our model. Once a transition is activated (i.e. its guard is satisfied), it have to be fired unless another guard with higher priority is also activated.
-    \item \emph{Ordered}. A channel may includes a list of transitions (single or group). They are ordered by their appearance. In other words, first written, first executed. 
+    \item \emph{Ordered}. An automaton may includes a set of transitions. They are ordered by their appearance. In other words, if several transitions are activated at the same time, the literally former one will be fired first.
 \end{itemize}
 
+Priority of transitions make the automaton fully deterministic. However, in some cases non-determinism is still rather necessary. \emph{Transition groups} are, consequently, imported to represent such behavior. Transitions in the same group do not follow the ordering rule. Instead, the group itself is literally ordered w.r.t. other groups and ungrouped transitions.
+
 \begin{formalization}[Transition Groups]
-    A transition group $t_G$ can be formalized as a list of guarded transitions
+    A transition group $t_G$ can be formalized as a finite list of guarded transitions
     \[
         t_G=\{t_1,\cdots, t_n\}, t_i=g_i\rightarrow S_i
     \]
     where $t_i$ is a single transition with guard $g_i$ and a set of statements $S_i$.
 \end{formalization}
 
+Since a single transition $g\rightarrow S$ can be equivalently written as a singleton group $\{g\rightarrow S\}$, it's acceptable if we assume that each automaton comprises a set of transition groups but no standalone transitions.
+
 \begin{formalization}[Automata]
-    We use a tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton instance, where $Ports$ is a set of ports, $Vars$ is a set of local variables and $Trans_G=\{t_{G_1},\cdots,t_{G_n}\}$ is a set of transition groups.
+    We use a tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton, where $Ports$ is a set of ports, $Vars$ is a set of local variables and $Trans_G=\{t_{G_1},\cdots,t_{G_n}\}$ is a set of transition groups.
 \end{formalization}
 
 \subsection{System : The Composition Approach}
@@ -194,59 +203,56 @@ All the transitions are supposed to have the following features. They are declar
 
 Theoretically, an automaton in \lang{} is powerful to represent any classical software system (without consideration of time and probability, of course). However, modeling complex systems in transitions and tons of local variables may become a real disaster. That's why we are going to introduce a new block, called \emph{system}, to help reuse existing automata (systems as well), and construct clear and comprehensible high-level models.
 
-To solve this problem, hierarchical diagrams are widely used in various modeling tools (e.g. SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink and LabVIEW) and formal languages (e.g. Reo\cite{ArbabMscs2004}, AADL). In such diagrams, blocks can be declared as \emph{components} and organized by a set of connections to capture more powerful behavior, where these connections are called \emph{channels}.
+% TODO: add references
+To solve this problem, hierarchical diagrams are widely used in various modeling tools (SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink and LabVIEW) and formal languages (Reo\cite{ArbabMscs2004}, AADL). In such diagrams, blocks can be declared as \emph{components} and organized by a set of connections to capture more powerful behavior, where these connections are called \emph{channels}. Figure. \ref{fig:diagram} gives a simple diagram of a message-oriented middleware, where a queue work as a connector to coordinate between the components (message producers and consumers).
 % TODO maybe not so commonly known?
 
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=.8\textwidth]{images/diagram.png}
-%     \caption{A Typical Model Diagram in Simulink}
-%     % TODO replace by my own picture
-% \end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{images/middleware_queue.png}
+    \caption{A Senerio where Queue is used in Message-Oriented Middleware\cite{CurryMfc2004}}
+    \label{fig:diagram}
+\end{figure}
 
-Both \emph{components} and \emph{connectors} (or \emph{channel}) are well-known concepts in component-based software engineering. However, in semantics level, they all turn out to the same nature -- \emph{automata}. Following this idea, we present a compositional block named \emph{system}, where automata can be instantiated as either components or channels. The abstract syntax tree of systems is shown as follows.
+Both \emph{components} and \emph{connectors} (or \emph{channels}) are well-known concepts in component-based software engineering. Though having different names, their semantics all turn out to the same nature, \emph{automata}. Following with the idea, we introduce a compositional block named \emph{system}, where automata can be declared as either components or connections. The abstract syntax tree of systems is shown as follows.
 \begin{bnf}
     \ntsym{system} ::= & \tsym{system} \ntsym{template}^?\ntsym{identifier} \tsym{(} \ntsym{port}^* \tsym{)} \tsym{\{}\\
     & (\tsym{internals} \ntsym{identifier}^+)^? \\
     & (\tsym{components} \tsym{\{} \ntsym{componentDecl}^* \tsym{\}})^? \\
     & \tsym{connections} \tsym{\{} \ntsym{connectionDecl}^* \tsym{\}} \tsym{\}}\\
-    \ntsym{componentDecl} ::= & \ntsym{identifier} \tsym{:} \ntsym{systemType} \\
+    \ntsym{componentDecl} ::= & \ntsym{identifier}^+ \tsym{:} \ntsym{systemType} \\
     \ntsym{connectionDecl} ::= & \ntsym{systemType} \ntsym{params} \tsym{(} \ntsym{portName}^+ \tsym{)}
 \end{bnf}
 
-The interface of a system (i.e. its template, name, and ports) shares exactly the same form with interfaces of automata, which also implies that system is not a special semantics unit, but simply an approach to construct more complex automata. A system is composed of internal nodes (optional), components(optional) and a set of connections.
+The interface of a system (i.e. its template, name, and ports) shares exactly the same form and meaning with interfaces of automata, which also implies that system is NOT a special semantics unit, but simply an compositional approach to pile up automata. A system is composed of internal nodes (optional), components(optional) and a set of connections.
 
-\vspace{0.2cm}
-\noindent\emph{Internals.}
-\vspace{0.2cm}
+\smalltitle{Components} Automata can be declared as components in a system. Ports of a component can be referred simply by \texttt{component.portname} where \emph{portname} is the identifier used in its declaration. 
 
-\noindent\emph{Components.}
-\vspace{0.2cm}
+\smalltitle{Connections} Connections, e.g. the arrows in Figure. \ref{fig:diagram}, are used to connect the ports of components.
+Both components and connections are supposed to execute concurrently as automata.
 
-\noindent\emph{Connections.}
+\smalltitle{Internals} Directly connecting one port to another is far from enough when modeling complicated systems. For example, in Figure. \ref{fig:diagram} queue work as a connection between consumers and producers. However, since connections to the middleware are dynamically established or disconnected, we still need an extra merger (from producers to the queue) and an extra replicator (from the queue to the consumers) to achieve our goal. When defining internal nodes, we don't have to specify their types. They should be automatically solved by \lang{}.
 
-\begin{example}[Alternator]
-\begin{figure}
-    \begin{CenteredBox}
-    \lstinputlisting{./grammar/resources/forpaper/alternator.prog}
-    \end{CenteredBox}
-\end{figure}
-\end{example}
+\begin{example}[\lang{} Model of the System in Figure. \ref{fig:diagram}] In the previous figure, a simple scenario is presented where a queue is used as a message-oriented middleware. To model this scenario, we need two automata \emph{Producer} and \emph{Consumer} (definitions are omitted due to space limit) that produce or consume message of type \emph{T}.
+\begin{lstlisting}
+automaton <T:type> Producer (OUT: out T) { ... }
+automaton <T:type> Consumer (IN: in T) { ... }
 
-\begin{figure}
-    \begin{CenteredBox}
-    \begin{lstlisting}
-system testBench () {
+system <T:type> middleware_in_use () {
     components {
-        writer1 : Writer<int>; writer2 : Writer<int>;
-        reader : Reader<int>;
+        producer_1, producer_2, producer_3 : Producer<T>;
+        consumer_1, consumer_2, consumer_3 : Consumer<T>;
     }
+    internals { M1, M2 }
     connections {
-        Alternator<int>(writer1.out, writer2.out, reader.in);
+        Merger<T>(producer_1.OUT, producer_2.OUT, producer_3.OUT, M1);
+        Queue<T>(M1, M2);
+        Replicator<T>(M2, consumer_1.IN, consumer_2.IN, consumer_3.IN);
     }
 }
-    \end{lstlisting}
-    \end{CenteredBox}
-\end{figure}
+\end{lstlisting}
+\end{example}
+
+Since the example is rather trivial, all the connections and components are automata here. But since automata and systems share the same form of interface, it's also valid to use systems as connections or components.
 
 \label{subsec:functions}
