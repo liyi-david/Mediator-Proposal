@@ -1,40 +1,55 @@
 \section{Semantics}
 \label{sec:semantics}
 
+In the section, we introduce the formal semantics of \lang{} by four steps.
+\begin{enumerate}
+    \item Use \emph{configurations} to formally describe the state of a automaton.
+    \item Convert an automaton to its canonical form, wiping out the dependency on language features \emph{alternative, urgent and ordered}.
+    \item Provide an algorithm that flats a complex system to an automaton.
+    \item Specify a transition-system-based semantics to \lang{} automata.
+\end{enumerate}
+
+% TODO: a figure is required here
+
 \subsection{Configurations of Automata}
 \label{subsec:config}
 % TODO: formalization of adjoint variables
 Configurations are used to represent the state of an automaton. Since we don't have locations here, it only depends on the values of its locally accessible variables, which includes both \emph{adjoint variables} and \emph{local variables}.
 
 \begin{definition}[Valuation]
-An evaluation of a set of variables $Vars$ is defined as a function $v$ that satisfies $\forall x\in Vars,v(x)\in Dom(type(x))$. We denote all the possible evaluations of a variable set $Vars$ as $Val(Vars)$.
+A valuation of a set of variables $V$ is defined as a function $v$ that satisfies $\forall x\in V,v(x)\in Dom(type(x))$. We denote the set of all possible valuations of $Vars$ by $Val(Vars)$.
 % TODO: how to say `without confusion`
 \end{definition}
 
 \begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. 
 \end{definition}
 
-\subsection{Canonical Form of Transitions}
+\subsection{Canonical Form of Transitions and Groups}
 \label{subsec:canonical}
 
 % TODO: what features?
 % As mentioned before, transitions in an automaton have fantastic features to write simple but powerful models, including \emph{a) Priority}. In this subsection we introduce how these features work, and how to convert the rich-featured models to traditional ones.
 \begin{definition}[Canonical Transitions]
-A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is an interleaving sequence of assignments and performs which start from an assignment, e.g. \texttt{a:= exp$_1$; perform A; b:= exp$_2$; $\cdots$}.
+A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is an interleaving sequence of assignments and performs which starts from an assignment, e.g. \texttt{a:= exp$_1$; perform A; b:= exp$_2$; $\cdots$}.
 \end{definition}
-We only need to simple steps to canonicalize a transition, they are:
+
+\begin{definition}[Canonical Transition Groups]
+    A transition-group list is canonical if and only if,
+    \begin{enumerate}
+        \item It contains exactly one transition group, and
+        \item all the transition in this group are also canonical.
+    \end{enumerate}
+\end{definition}
+
+In order to canonicalize a transition, we need to:
 \begin{enumerate}
-    \item Merging the contiguous assignments. As mentioned before, an assignment statement is represented as a function $f:EV\rightarrow EV$. Thus a list of multiple assignments $f_1,\cdots, f_n$ can be simplified by $f=f_1\circ\cdots \circ f_n$.
-    \item Any two adjacent performs should be separated by a identical assignment $id_{EV}$. 
+    \item Merge the contiguous assignments. As mentioned before, an assignment statement is represented as a function $f:EV\rightarrow EV$. Thus a list of multiple assignments $f_1,\cdots, f_n$ can be simplified by $f=f_1\circ\cdots \circ f_n$.
+    \item Put identical assignments $id_{EV}$ into any two adjacent performs.
 \end{enumerate}
 
 \smalltitle{Observable} A transition is always \emph{observable}, i.e. it will makes some difference to the context. For example, without this assumption, a transition \texttt{true -> x := x} will block the whole model by endless meaningless executions.
 
-\begin{definition}[Canonical Transition Groups]
-    A transition group is canonical iff. it only contains one canonical transition.
-\end{definition}
-
-\smalltitle{Priority} Given a set of ordered transitions.
+\smalltitle{Reducing Order} First we consider a simpler situation, where only \emph{single} transitions are involved. Given a set of ordered transitions
 \[
     \{g_1\rightarrow S_1,g_2\rightarrow S_2,\cdots,g_n\rightarrow S_n\}
 \]
@@ -122,7 +137,7 @@ Systems, as shown previously, are simply introduced to construct automata in a m
 \subsection{Automaton as Labelled Transition System}
 
 \begin{definition}[Transition System, TS]
-    A transition system is a tuple $(S,\rightarrow)$ where $S$ is a set of states and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reason, we use $s\rightarrow s'$ to denote $(s,s')$ in $\rightarrow$.
+    A transition system is a tuple $(S,\rightarrow)$ where $S$ is a set of states and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reasons, we use $s\rightarrow s'$ to denote $(s,s')$ in $\rightarrow$.
 \end{definition}
 
 Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics can be captured by a labelled transition system $\langle S_A, \rightarrow_A\rangle$ where
@@ -144,5 +159,3 @@ The first three rules describe the potential change of context, i.e. the adjoint
 The rule R-Internal models the internal transitions in $Trans_G$. As illustrated previously, an internal transition doesn't contains any perform statement. So its canonical form comprises only one assignment $s$. Firing such a transition will simply apply $s$ to the current configuration.
 
 Meanwhile, R-External models the external transitions, where the automaton need to interact with its context. Fortunately, since all the context change are captured by the first three rules, we can simply regard the context as a set of local variables. Consequently, the only difference between an internal transition and an external transitions is that the later may contains multiple assignments.
-
-%TODO: take queue as an example

@@ -1,0 +1,228 @@
+\section{The Grammar}
+\label{lbl:grammar}
+
+In this section, we mainly focus on the syntax of our language, it is divided into different parts and basically described in  \emph{Extended Backus-Naur form (EBNF)}.
+
+Let's introduce the overview of this language first.
+
+\begin{bnf}
+    \ntsym{program} &::= & [\ntsym{statement}]^* \\
+    \ntsym{statement} &::=& \ntsym{importStmt} | \ntsym{typedefStmt} | \ntsym{functionStmt} \\
+    &|& \ntsym{channelStmt} | \ntsym{componentStmt} \\
+    &|& \ntsym{connectorStmt} \\
+\end{bnf}
+
+\subsection{Type System}
+
+The basic idea behind this type system is that we try to satisfy both researchers and programmers.
+
+\begin{bnf}
+    \ntsym{primitiveType} &::= & \tsym{int}[\ntsym{term}\tsym{..}\ntsym{term}] \\
+    & | & \tsym{double} | \tsym{char} | \tsym{bool} | \tsym{NULL} \\
+    & | & \tsym{enum} {\{} \ntsym{identifier}^+\tsym{\}} \\ 
+    & | & \ntsym{identifier} \\
+    \ntsym{extendedType} &::= & \ntsym{primitiveType} \\
+    & | & \ntsym{type} \tsym{$|$} \ntsym{type} \\
+    & | & \tsym{array} \ntsym{extendedType} \tsym{[} \ntsym{term} \tsym{]}\\
+    & | & \tsym{map} \tsym{[} \ntsym{extendedType}\tsym{]} \ntsym{type}\\
+    & | & \tsym{struct} \tsym{\{} (\ntsym{identifier} \tsym{:} \ntsym{type})^+ \tsym{\}}\\
+\end{bnf}
+
+% TODO is raw type a common name ? needs some googling
+
+\begin{definition}[Finite Types]
+    A type in \lang{} is \emph{finite} iff. it has a finite value domain.
+\end{definition}
+
+
+\noindent\emph{Primitive Type.} \lang{} provides built-in support for common primitive types, they are,
+\begin{itemize}
+    \item \emph{Int}. Similar to  
+    \item \emph{Double.}
+    \item \emph{Bool.} Boolean variables.
+    \item \emph{Enum.} An \emph{enumeration} is a finite collection of unique identifiers.
+    \item \emph{NULL.} For simplicity, in \lang{} we don't have pointers references, however, sometimes a non-sense value is strongly required to denote uninitialized value, illegal operation (e.g. divided by zero) and exceptions. Consequently, we define a single-value type NULL, of which the only possible value is \emph{null}.
+\end{itemize}
+
+\noindent\emph{Extended Type.} Extended type offers an approach to contruct complex data types with simpler ones. Four extending patterns are introduced as follows,
+\begin{itemize}
+    \item \emph{Union}. The \emph{union} operator `$|$' is designed to combine two \emph{disjoint} types as a more complicated one. This is similar to the union type in C language but much easier to use.
+    \item \emph{Array} and \emph{Slice}. An \emph{array} $T$[n] is a finite ordered collection containing exactly $n$ elements of type $T$. Moreover, a \emph{slice} is an array of which the capacity is not specified.
+    \item \emph{Map}. A \emph{map }[$T_{key}$] $T_{val}$ is a dictionary that maps a key of type $T_{key}$ to a value of type $T_{val}$.
+    \item \emph{Struct}. A \emph{struct }\{$field_1:T_1,\cdots,field_n:T_n$\} contain $n$ fields, each has a particular type $T_i$ and a unique identifier $id_i$.
+\end{itemize}
+
+Type systems often differ greatly between formal models and real-world programming languages. For example, PRISM\cite{KwiatkowskaCav2011}, ..
+
+% TODO: in popular standards, a system may contains different safety/security level. 
+
+In \lang's type system, most of basic types are finite except for the unlimited integers and doubles. Besides, extended types are also finite if they are based on finite ones.
+
+% typing rules
+
+\begin{definition}[Subtyping]
+    Type $T_1$ is a subtype of $T_2$, denoted by $T_1\subtype
+ T_2$, iff. a value of type $T_1$ can be converted to a value of type $T_2$ losslessly.
+\end{definition}
+
+\begin{mathpar}
+    \inferrule* [right=S-FiniteInt] {l_1,u_1,l_2,u_2 \in \mathbb{Z}, l_1\leq u_1\land l_2\geq u_2}{\mbox{int $l_1$ .. $u_1$} \subtype \mbox{int $l_2$ .. $u_2$}} \\
+    \inferrule* [right=S-Enum] {n \in \mathbb{Z}}{\mbox{enun \{ $item_0,\cdots,item_{n-1}$\}} \subtype \mbox{int 0 .. (n - 1)}} \\
+    \inferrule* [right=S-Bool] {.}{\mbox{bool} \subtype \mbox{int 0 .. 1}} \\
+    \inferrule* [right=S-Int] {l,u \in \mathbb{Z}}{\mbox{int $l$ .. $u$} \subtype \mbox{int}}\\
+    \inferrule* [right=S-Union] {T_1\subtype T_3, T_2\subtype T_4}{T_1 | T_2 \subtype T_3 | T_4 } \\
+\end{mathpar}
+
+\subsection{Type Alias and Concrete Types}
+
+\begin{bnf}
+    \ntsym{typedefStmt} &::=& \tsym{typedef} \ntsym{type} \tsym{as} \ntsym{identifier} [\tsym{init} \ntsym{term}]
+\end{bnf}
+
+In most programming languages, a non-reference type has a built-in default value. However, such values are not specified by programmers, and sometimes may lead to unexpected behavior.
+
+
+\subsection{Terms}
+
+\begin{bnf}
+    \ntsym{term} &::=& \ntsym{termPrimitive} \\
+    &|& \ntsym{term} \tsym{+} \ntsym{term} | \ntsym{term} \tsym{-} \ntsym{term} \\
+    &|& \ntsym{term} \tsym{*} \ntsym{term} | \ntsym{term} \tsym{/} \ntsym{term} \\
+    &|& \tsym{!} \ntsym{term} \\
+    &|& \ntsym{identifier} \tsym{(} \ntsym{term}^* \tsym{)} \\
+    &|& \ntsym{term} \tsym{[} \ntsym{term} \tsym{]} \\
+    &|& \ntsym{term} \tsym{.} \ntsym{identifier} \\
+    &|& \tsym{(} \ntsym{type} \tsym{)} \ntsym{term}
+\end{bnf}
+
+\begin{mathpar}
+    \inferrule* [right=T-Call]{t_1:T_1,\cdots,t_n,T_n,f:T_1\rightarrow \cdots T_n\rightarrow T}{f(t_1,\cdots,t_n):T} \\
+    \inferrule* [right=T-Array]{t_{arr}:T\:[n],0\leq i<n}{t_{arr}[i]:T} \\
+    \inferrule* [right=T-Slice]{t_{slice}:T\:[\:],0\leq i< len(t_{slice})}{t_{slice}[i]:T} \\
+    \inferrule* [right=T-Map]{t_{map}:\mbox{map }[T_1]\:T_2,t_{key}:T_1}{t_{map}[t_{key}]:T_2}\\
+    \inferrule* [right=T-struct]{t_{struct}:\mbox{struct }\{field_1:T_1,\cdots,field_n:T_n\},1\leq i\leq n}{t_{struct}.field_{i}:T_i}
+\end{mathpar}
+
+Rules of operators (e.g. $+,-,*$) are not presented here. That's mainly due to their abstract nature. In \lang{}, native semantics of numeric operators is absent on syntax level. In other words, we have to manually implement these operators as functions, for example.
+
+\subsection{Functions}
+
+\begin{bnf}
+    \ntsym{funcStmt} &::=& \tsym{function} ( \\
+    &  & \ntsym{template} \ntsym{identifier} \ntsym{interface} \ntsym{body} \\
+    & | & \tsym{native} \\
+    & ) &
+\end{bnf}
+
+\begin{example}[Operator Overriding]
+    \begin{lstlisting}
+native function operatorAdd (a:int,b:int):int;
+native function <l1:int,l2:int,u1:int,u2:int> operatorAdd(a:int l1 .. u1, b:int l2 .. u2) : int (l1 + l2) .. (u1 + u2);
+    \end{lstlisting}
+\end{example}
+
+% TODO: note that in the rules there some logic formulas. in practice, these formulas needs to be derived from guard conditions or else
+
+\subsection{Automata and Systems}
+
+In this subsection, we introduce several basic functional blocks in \lang{}, they are : \emph{automata}, the atomic coordination units; \emph{components}, the atomic functional units; and their mixture \emph{connectors}.
+
+All these terms are quite popular concepts in component-based software engineering. In a common senario, components are developed and tested separately by different developers (teams), then collected and organized by connectors which define how these components interact with each other. Basically, complex connectors are composed of simpler ones, among which the primitive ones are called channels.
+
+\begin{definition}[Channel]
+Channels are the atomic functional units in our language. A channel comprises several parameters; a set of ports, either \emph{input} or \emph{output}; some private variables; and a series of \emph{ordered} transitions.
+\end{definition}
+
+\begin{bnf}
+    \ntsym{channel} & ::= & \tsym{channel}[\ntsym{template}]\ntsym{identifier} \stsym{(} \ntsym{port}^* \stsym{)}\\
+    & & \tsym{\{} \ntsym{variables} \ntsym{transitions} \tsym{\}} \\
+    \ntsym{port} & ::= & \ntsym{identifier} \tsym{:} (\tsym{in}|\tsym{out}) \ntsym{type} \\
+    \ntsym{template} & ::= & \tsym{$\langle$} \ntsym{param}^+ \tsym{$\rangle$} \\
+    \ntsym{param} & ::= & (\tsym{type} | \ntsym{type}) \ntsym{identifier} \\
+    \ntsym{variables} & ::= & \tsym{variables} \tsym{\{} (\ntsym{identifier} \ntsym{type} [\tsym{init} \ntsym{term}])^* \tsym{\}}
+\end{bnf}
+
+Essentially, behavior of a channel is encoded as a set of \emph{guarded transitions}. 
+
+Before introducing the formal grammar of channels, we present a simple example, the asychronous \emph{FIFO1} buffer channel that comes from \emph{Reo Coordination Language}\cite{ArbabMscs2004}.
+
+\begin{example}[FIFO1 Channel]
+\label{exp:fifo1}
+\begin{figure}
+    \centering
+    \begin{CenteredBox}
+        \lstinputlisting{grammar/resources/forpaper/fifo.med}
+    \end{CenteredBox}
+    \caption{Definition of FIFO1 in \lang{}}
+\end{figure}
+\end{example}
+
+\vspace{0.2cm}
+\noindent\emph{Template.} A channel may comes up with a template, which is a set of constant values or types (we denote them as \emph{parameters} hereinafter) that is specified while being instantiated. Templates make it able to create a family of similar channel instances with only a single definition. Parameters in a template can be refered in everywhere of this channel, including the interface and variables section.
+
+% TODO: we also plan to use template parameters to dynamically generate semantics
+% by for statement
+
+\vspace{0.2cm}
+\noindent \emph{Interface.} Interfaces describe through what ports the channels communicate with its environment. As shown in the example above, \texttt{A:in T, B:out T} is the interface of a Synchronous channel, indicating that this channel have an input port and an output port, both of type A, which is provided as a template parameter.
+
+\vspace{0.2cm}
+\noindent \emph{Variables.} Two types of variables may show up in a channel, they are:
+\begin{enumerate}
+    \item A set of \emph{local variables} can be declared in the \emph{variables} section, of any possible type and with a default value.
+    \item A special family of variables, called \emph{adjoint variables}, are used to describe the status of ports. For a port A, we assume that it has two boolean fields \texttt{A.reqRead} and \texttt{A.reqWrite} indicating if there is a pending \emph{read} or \emph{write} request on this port, and a data field \texttt{A.value} indicating the current value of this port (if a write operation is performed, \texttt{A.value} will be reassigned).
+\end{enumerate}
+
+A resonable rule comes up that, both the \texttt{reqWrite} field of a input port and the \texttt{reqRead} field of a output port are \emph{read-only}. Similarly, we cannot rewrite the \texttt{value} field of a input port.
+
+\vspace{0.2cm}
+\noindent \emph{Transitions.} Similar to the PRISM\cite{KwiatkowskaCav2011} language, behavior of a channel in \lang{} is described by a series of guarded transitions (groups). As described in Example \ref{exp:fifo1}, a \emph{transition} comprises two parts: a boolean term named \emph{guard}, and a set of statements that describe how the channel behave if the guard become satisfied. A formal definition of transitions' syntax is presented as follows.
+
+\begin{bnf}
+    \ntsym{transitions} & ::= & \tsym{transitions} \tsym{\{} (\ntsym{transition}|\ntsym{group})^* \tsym{\}} \\
+    \ntsym{transition} & ::= & \ntsym{term} \rightarrow \\
+    & & (\ntsym{statement} | \tsym{\{} \ntsym{statement}^+ \tsym{\}})\\
+    \ntsym{statement} & ::= & \ntsym{identifier}^+\tsym{:=}\ntsym{term}^+\\
+    & | & \tsym{perform} \ntsym{identifier}^+ \\
+    \ntsym{group} & ::= & \tsym{group} \tsym{\{} \ntsym{transition}^+ \tsym{\}}
+\end{bnf}
+
+Each transition includes a list of statements, either \emph{perform statements} or \emph{assignment statements}. They are organized in order and executed one after another. A \emph{perform} statement, decorated with a non-empty set of \emph{port identifiers}, indicates that in the certain step of this transition, the channel need to sync with its other fellows through this port. And assignment statements can rewrite variables in the current context (including output ports and local variables) with certain expressions.
+
+Though not mentioned explicitly, transitions can be divided into two classes: \emph{external} and \emph{internal}. A transition is external iff. perform assignments are involved to model the interaction with environment.
+
+
+Transitions are designed with the following assumptions.
+
+\begin{itemize}
+    \item Urgency. In some formal models, e.g. Timed Automata\cite{AlurTcs1994}, transitions may be suspended even when its guard is satisfied. On contrast, such behavior is strictly prohibited in our model. Once a transition is activated (i.e. its guard is satisfied), it have to be fired unless another guard with higher priority is also activated.
+    \item Priority. A channel may includes a list of transitions (single or group). They are ordered by their appearance. In other words, first written, first executed. 
+    \item 
+\end{itemize}
+
+\subsection{Connector : An Approach to Compose Complex Models}
+
+In this subsection, we introduce the \emph{connectors}, which are used to model complex behavior by composition of basic channels (connectors as well).
+
+\vspace{0.2cm}
+\noindent\emph{Flow-Through Assumption.}
+
+\begin{bnf}
+    \ntsym{connector} & ::= & \tsym{connector} \ntsym{template}^?\ntsym{identifier} \stsym{(} \ntsym{ports} \stsym{)} \\
+    & & \tsym{\{} \ntsym{internals}^? \ntsym{connection}^+ \tsym{\}} \\
+    \ntsym{interals} & ::= & \tsym{internal} \ntsym{identifier}^+ \\
+    \ntsym{connection} & ::= & \ntsym{identifier} \tsym{(} \ntsym{identifier}^+ \tsym{)}
+\end{bnf}
+
+% rules
+% only flow-through is enabled
+% TODO: functions are free from side-effects
+
+\begin{example}[Alternator in Reo]
+\end{example}
+
+\begin{figure}
+    \begin{CenteredBox}
+    \lstinputlisting{./grammar/resources/forpaper/alternator.prog}
+    \end{CenteredBox}
+\end{figure}
