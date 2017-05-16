@@ -148,9 +148,12 @@ A reasonable rule comes up that, both the \texttt{reqWrite} field of a input por
     \item \emph{Perform Statements} (\texttt{perform port$_1$,...,port$_n$}). Informally speaking, perform statements tell the environment to fire data operations on the output ports, or wait until being noticed that data operation on the input ports are fired by the environment (other automata, actually). Consequently, it's reasonable to require that the value of an input port should never be referred until the port is performed. Similarly, the value of an output port should never be assigned after the port is performed. Perform statements are mainly used when combining multiple automata, where they determine how transitions are synchronized. (See in Section \ref{subsec:composition})
 \end{itemize}
 
-When guard of a transition is satisfied by the context, we say the transition is \emph{activated}. However, being activated is only necessary condition of being fired. When choosing a transition to fire, we have to consider other criteria, which will be introduced later.
+A transition is called \emph{external} iff. it synchronizes with the environment through some ports, or \emph{internal} otherwise. Literally, all transitions, where perform statements are involved, are \emph{external} transitions. And in such transitions, the following rules are strictly required to avoid read/write conflicts.
 
-Though not mentioned explicitly, transitions can be divided into two classes: \emph{external} and \emph{internal}. A transition is \emph{external} iff. perform assignments are involved. 
+\begin{enumerate}
+    \item Any reference to an input port (A, for example) should be placed after its corresponding perform statement \texttt{perform A}.
+    \item Any reference to an output port (B, for example) should be placed before its corresponding perform statement \texttt{perform B}.
+\end{enumerate}
 
 \begin{formalization}[Transitions]
 Formally, we use $g\rightarrow S$ to denote a transition, where $g$ is the guard formula and $S=\{s_1,\cdots,s_n\}$ is a set of statements. 
@@ -160,13 +163,16 @@ Here we present an example to show how transitions are used to model the behavio
 \begin{example}[Transitions in Queue] In a \texttt{Queue}, we use internal transitions to formalize the changes of its state. For example, becoming writable when buffer is not full, and readable when buffer is not empty. External transitions, on the other hand, mainly show how the read and write operations are performed.
 \begin{lstlisting}
 // Internal Transitions
-true -> B.reqWrite := (buf[ptail] != null) ;
-true -> A.reqRead  := (buf[phead] == null) ;
+B.reqWrite && (buf[ptail] == null) -> B.reqWrite := false;
+!B.reqWrite && (buf[ptail] != null) -> B.reqWrite := true;
+A.reqRead && (buf[phead] != null) -> B.reqRead := false;
+!A.reqRead && (buf[phead] == null) -> B.reqRead := true;
 
-// External Transitions
+// enqueue operation (as an external transition)
 (A.reqRead && A.reqWrite) -> {
     perform A; buf[phead] := A.value; phead := next(phead);
 }
+// dequeue operation (as an external transition)
 (B.reqRead && B.reqWrite) -> {
     B.value := buf[ptail]; ptail := next(ptail); perform B;
 }
@@ -174,10 +180,10 @@ true -> A.reqRead  := (buf[phead] == null) ;
 \label{exp:trans_queue}
 \end{example}
 
+% TODO: use a better representation
 All the transitions are supposed to have the following features. They are declared on the syntax level, i.e. we will resolve this feature when discussing the formal aspect of \lang{} and use a simple and standard automata model to capture all these features (see in Section. \ref{sec:semantics}).
 
 \begin{itemize}
-    \item \emph{Alterative}. A transition won't be fired if it changes nothing in its context. For example, the first internal transition in a \texttt{Queue} will not be activated if \texttt{B.reqWrite} is already equal to \texttt{buf[ptail] != null}. This assumption is mainly used to avoid useless executions.
     \item \emph{Urgent}. In some formal models, e.g. CSP\cite{HoareCsp1985} and Timed Automata\cite{AlurTcs1994}, transitions may not be triggered even the guard is satisfied. On contrast, such behavior is strictly prohibited in our model. Once a transition is activated (i.e. its guard is satisfied), it have to be fired unless another guard with higher priority is also activated.
     \item \emph{Ordered}. An automaton may includes a set of transitions. They are ordered by their appearance. In other words, if several transitions are activated at the same time, the literally former one will be fired first.
 \end{itemize}
@@ -253,6 +259,17 @@ system <T:type> middleware_in_use () {
 \end{lstlisting}
 \end{example}
 
-Since the example is rather trivial, all the connections and components are automata here. But since automata and systems share the same form of interface, it's also valid to use systems as connections or components.
+\begin{formalization}[System]
+    A system is denoted by a 4-tuple
+    \[
+        S=\langle Ports, Automata, Internals, Links\rangle
+    \] where $Ports$ is a set of ports, $Automata$ is a set of automata (both components and connections), $Internals$ is a set of internal nodes and a set of links (pairs of ports or internal nodes) that show how they are joint together.
+\end{formalization}
+A well-defined system satisfies the following assumptions:
+\begin{enumerate}
+    \item $\forall (p_1,p_2)\in Links$, data transfer from $p_1$ to $p_2$. For example, if $p_1\in Ports$ is an input port, $p_2$ could be \emph{a) an output port of the system ($p_2\in Ports$)}, \emph{b) an input port of some automaton $A_i\in Automata$ ($p_2\in A_i.Ports$)} or \emph{c) an internal node ($p_2\in Internals$)}.
+    \item $\forall n\in Internals,\exists!p_1,p_2$ i.e. $(p_1,n),(n,p_2)\in Links$.
+    \item The \emph{type} function can be extended to $Internals$ and satisfies $\forall (p_1,p_2)\in Links, type(p_1)=type(p_2)$.
+\end{enumerate}
 
 \label{subsec:functions}

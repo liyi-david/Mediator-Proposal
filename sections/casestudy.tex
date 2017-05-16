@@ -1,0 +1,69 @@
+\section{Case Study}
+\label{sec:casestudy}
+
+In modern distributed computing frameworks (e.g. MPI and ZooKeeper), \emph{leader election} plays an important role to organize multiple servers efficiently and consistently. This section shows how a classical leader election algorithm is modeled and easily used to coordinate other components in \lang{}.
+
+ \cite{HagitDistributed2004} proposed an classical algorithm for a typical leader election scenario, as shown in Figure. \ref{fig:leaderelection}. Distributed processes are organized as a \emph{asynchronous unidirectional} ring where communication take place only between adjacent processes and following certain direction (from left to right in this case).
+
+\begin{figure}
+	\centering
+	\resizebox{.8\textwidth}{!}{
+        \input{images/cluster}
+    }
+	\caption{(a) Topology of a Asynchronous Ring and (b) Structure of a Process}
+	\label{fig:leaderelection}
+\end{figure}
+
+The algorithm mainly includes the following steps:
+\begin{enumerate}
+	\item To begin with, each process sends a voting message including its own \emph{id} to its successor.
+	\item A process, when receives a voting message, will
+	\begin{itemize}
+		\item forward the message to its successor if it contains a larger \emph{id} than itself,
+		\item ignore the message if it contains a smaller \emph{id} than itself, and
+		\item take itself as a leader if it contains the same \emph{id} with itself.
+	\end{itemize} 
+\end{enumerate}
+
+Here we formalize this algorithm through a more general approach. Leader election is encapsulated as \texttt{connector} since it is also responsible to handle the communication between processes. A computing module \texttt{main} is attached to the connector, and used to model computing tasks. 
+
+Two types of messages, \texttt{msgVote} and \texttt{msgLocal}, are supported when formalizing this architecture.
+\begin{example}[Definition of Message Types]
+Voting messages \texttt{msgVote} are transferred between the connectors. A voting message carries two fields, \emph{vtype} that declares the stage of leader election (either it is still voting or some process has already been acknowledged) and a \emph{id} an identifier of the current leader (if have).
+\begin{lstlisting} 
+typedef struct { vtype: enum {vote, ack}, id: int } as msgVote;
+typedef struct {
+	status : enum { pending, acknowledged },
+	idLocal : int,
+	idLeader : int | NULL
+} as msgLocal;
+\end{lstlisting}
+\end{example}
+
+
+\begin{lstlisting}
+automaton <id:int> election_module (
+	left  : in msgVote,  right  : out msgVote,
+	query : in msgLocal, notice : out msgLocal
+) { ... }
+
+system cluster_instance() {
+	components {
+		E1 : election_module<1>; E2 : election_module<2>;
+		E3 : election_module<3>;
+		C1, C2, C2 : worker;
+	}	
+	connections {
+		Sync<msgVote>(E1.left,  E2.right);
+		Sync<msgVote>(E2.right, E3.left );
+		Sync<msgVote>(E3.right, E1.left );
+		
+		Sync<msgLocal>(C1,query,  E1.query );
+		Sync<msgLocal>(C1,notice, E1.notice);
+		Sync<msgLocal>(C2,query,  E2.query );
+		Sync<msgLocal>(C2,notice, E2.notice);
+		Sync<msgLocal>(C3,query,  E3.query );
+		Sync<msgLocal>(C3,notice, E3.notice);
+	}
+}
+\end{lstlisting}

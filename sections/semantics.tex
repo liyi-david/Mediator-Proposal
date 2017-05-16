@@ -21,49 +21,44 @@ A valuation of a set of variables $V$ is defined as a function $v$ that satisfie
 % TODO: how to say `without confusion`
 \end{definition}
 
-\begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. 
+\begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. We use $Conf(A)$ to denote all the configurations of $A$.
 \end{definition}
 
-\subsection{Canonical Form of Transitions and Groups}
+\subsection{Canonical Form of Transitions and Automata}
 \label{subsec:canonical}
 
-% TODO: what features?
-% As mentioned before, transitions in an automaton have fantastic features to write simple but powerful models, including \emph{a) Priority}. In this subsection we introduce how these features work, and how to convert the rich-featured models to traditional ones.
 \begin{definition}[Canonical Transitions]
-A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is an interleaving sequence of assignments and performs which starts from an assignment, e.g. \texttt{a:= exp$_1$; perform A; b:= exp$_2$; $\cdots$}.
+A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is an interleaving sequence of assignments and performs which starts from and ends by assignments, e.g. \texttt{a := exp$_1$; perform A; b := exp$_2$; $\cdots$ \texttt{c := exp$_3$}}.
 \end{definition}
 
-\begin{definition}[Canonical Transition Groups]
-    A transition-group list is canonical if and only if,
-    \begin{enumerate}
-        \item It contains exactly one transition group, and
-        \item all the transition in this group are also canonical.
-    \end{enumerate}
+Assume $g\rightarrow\{s_1,\cdots,s_n\}$ is a transition of automaton $A$, the following algorithm shows how it is canonicalized,
+\begin{description}
+    \item[S1] Any continuous subsequences $s_i,\cdots,s_j(j>i)$ exists where all elements are assignment statements should be merged. As mentioned before, an assignment statement is represented as a function $f:Conf(A)\rightarrow Conf(A)$. Thus a list of multiple assignments $s_i,\cdots, s_j$ can be replaced using $s'=s_i\circ\cdots \circ s_j$.
+    \item[S2] Keep going with \emph{S1} until there is no further subsequence to merge.
+    \item[S3] Put identical assignment $id_{Conf(A)}$ into any two adjacent \emph{perform}s. Similarly, if the statements start from or end with a \emph{perform} statement, we should also use $id_{Conf(A)}$ to decorate its head and tail.
+\end{description}
+
+\begin{definition}[Canonical Automata]
+    An automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is canonical iff. a) $Trans_G$ includes only one transition group and b) all transitions in this group are also canonical.
 \end{definition}
+% \smalltitle{Reducing Order} First we consider a simpler situation, where only \emph{single} transitions are involved. Given a set of ordered transitions
+% \[
+%     \{g_1\rightarrow S_1,g_2\rightarrow S_2,\cdots,g_n\rightarrow S_n\}
+% \]
+% As required by the \emph{priority} assumption, a transition can be fired only if all the previous ones are not enabled (i.e. their guards are not satisfied) yet. In \lang{}, this feature is resolved simply by adding $\lnot g_i$ to all $g_j(j>i)$. E.g.
+% \[
+%     \{g_1\rightarrow S_1, g_2\land(\lnot g_1)\rightarrow S_2,\cdots,g_n\land(\lnot g_1\land \lnot g_2\land\cdots\land \lnot g_{n-1})\rightarrow S_n\}
+% \]
 
-In order to canonicalize a transition, we need to:
-\begin{enumerate}
-    \item Merge the contiguous assignments. As mentioned before, an assignment statement is represented as a function $f:EV\rightarrow EV$. Thus a list of multiple assignments $f_1,\cdots, f_n$ can be simplified by $f=f_1\circ\cdots \circ f_n$.
-    \item Put identical assignments $id_{EV}$ into any two adjacent performs.
-\end{enumerate}
-
-\smalltitle{Observable} A transition is always \emph{observable}, i.e. it will makes some difference to the context. For example, without this assumption, a transition \texttt{true -> x := x} will block the whole model by endless meaningless executions.
-
-\smalltitle{Reducing Order} First we consider a simpler situation, where only \emph{single} transitions are involved. Given a set of ordered transitions
-\[
-    \{g_1\rightarrow S_1,g_2\rightarrow S_2,\cdots,g_n\rightarrow S_n\}
-\]
-As required by the \emph{priority} assumption, a transition can be fired only if all the previous ones are not enabled (i.e. their guards are not satisfied) yet. In \lang{}, this feature is resolved simply by adding $\lnot g_i$ to all $g_j(j>i)$. E.g.
-\[
-    \{g_1\rightarrow S_1, g_2\land(\lnot g_1)\rightarrow S_2,\cdots,g_n\land(\lnot g_1\land \lnot g_2\land\cdots\land \lnot g_{n-1})\rightarrow S_n\}
-\]
-Now let's consider a set of ordered groups $t_{G_i}$, where $t_{G_i}$ contains $l_i$ transitions,
+Now we show how $Trans_G$ is reformed to make the automaton canonical.
+Assume that $Trans_G$ can be represented by,
 \begin{small}
 \[
-    T_G=\{t_{G_1}=\{g_{11}\rightarrow S_{11},\cdots, g_{1l_1}\rightarrow S_{1l_1}\},\cdots,t_{G_n}=\{g_{n1}\rightarrow S_{n1},\cdots,g_{nl_n}\rightarrow S_{nl_n}\}\}
+    \{t_{G_1}=\{g_{11}\rightarrow S_{11},\cdots, g_{1l_1}\rightarrow S_{1l_1}\},\cdots,t_{G_n}=\{g_{n1}\rightarrow S_{n1},\cdots,g_{nl_n}\rightarrow S_{nl_n}\}\}
 \]
 \end{small}
-Informally speaking, once a transition in $t_{G_1}$ is enabled, all the other transitions in $t{G_i}(i>1)$ should be strictly prohibited from being fired. We use $enab(t_G)$ to denote the condition where at least one transition in $t_G$ is enabled, formalized as
+
+Informally speaking, once a transition in $t_{G_1}$ is enabled, all the other transitions in $t_{G_i}(i>1)$ should be strictly prohibited from being fired. We use $enab(t_G)$ to denote the condition where at least one transition in $t_G$ is enabled, formalized as
 \[
     enab(t_G=\{g_1\rightarrow S_1,\cdots, g_n\rightarrow S_n\}) = g_1\lor\cdots\lor g_n
 \]
@@ -77,62 +72,93 @@ where $enab(t_{G_1},\cdots,t_{G_{n-1}})$ is an abbreviation of $enab(t_{G_1})\lo
 \subsection{From System to Automaton}
 \label{subsec:composition}
 
-Systems, as shown previously, are simply introduced to construct automata in a more natural way. Now we show how such a system can be flatten as a standard automaton.
+As mentioned previously, system in \lang{} provides an approach to combine automata through \emph{components} and \emph{connectors}. However, a system is not a semantics element in our framework, in other words, behavior of a system relies on how the automata are organized and scheduled. In this section, we present the algorithms that formally describe the composition approach in \lang{}.
 
-% TODO: canonical form of a transition mus requires a interleaving form, may be filled
-% with non-sense assignments
-% TODO: topological sorting
+Algorithm \ref{alg:compose}. shows how to construct the skeleton of target automaton. When flatting a \emph{system}, first we rename all the variables in this sub-automata (including both components and connectors) to avoid name conflicts. Next we simply copy all the internal transitions to the target automaton. 
+
 \begin{algorithm}[H]
+    \caption{Flatting Systems}
+    \label{alg:compose}
+    \begin{algorithmic}[1]
+        \REQUIRE A system $S=\langle Ports, Automata, Internals, Links\rangle$
+        \ENSURE An automaton $A$
+        \STATE $A \leftarrow $ empty automaton
+        \STATE $A.Ports\leftarrow S.Ports$
+        \STATE rename \emph{local variables} in $Automata=\{A_1,\cdots,A_n\}$ to avoid duplicated names
+        \STATE $ext\_trans\leftarrow \{\}$
+        \FOR{$i\leftarrow 1,2,\cdots,n$}
+            \STATE $A.Vars\leftarrow A.Vars + A_i.Vars$
+            \STATE $A.Trans_G \leftarrow A.Trans_G + Internal(A_i.Trans_G)$
+            \STATE $ext\_trans \leftarrow ext\_trans + External(A_i.Trans_G)$
+        \ENDFOR
+        \FOR{$set\_trans\in 2^{ext\_trans}$}
+            \STATE $new\_edge\leftarrow \mbox{\texttt{Schedule}}(S, set\_trans)$ 
+            \IF{\emph{new\_edge $\neq$ null}}
+                \STATE $A.Trans_G = A.Trans_G + \{new\_edge\}$
+            \ENDIF
+        \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+
+External transitions, on the other hand, have to synchronize with its corresponding external transitions in other automata. For example, when an automaton want to read some thing from a input port $P_1$, there must be another one that is writing something to its output port $P_2$ where $P_1$ and $P_2$ are overlapped in the system.
+
+In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite and value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to shared variables are executed before dereferencing them. The detailed algorithm is described in Algorithm \ref{alg:synchronize}.
+
+\begin{algorithm}[t]
     \caption{Scheduling in a Synchronous Set of External Transitions}
     \label{alg:synchronize}
     \begin{algorithmic}[1]
-        \REQUIRE $t_1,t_2,\cdots,t_n$ are transitions (canonical form)
-        \ENSURE $t=\mbox{\texttt{Schedule}}(t_1,\cdots,t_n)$
+        \REQUIRE A System $S$, a set of transitions $t_1,t_2,\cdots,t_n$ (in canonical form)
+        \ENSURE A synchronized transition $t$
         \IF{$\{t_i\}$ don't belong to different automata or $\exists t_i$ is internal}
             \STATE $t\leftarrow null$
             \RETURN
         \ENDIF
         \STATE \emph{t.g, t.S} $\leftarrow \bigwedge_i t_i.g,\:\{\}$
+        \STATE \emph{shared\_ports}$\leftarrow$ all the 
+        \STATE 
+        \STATE  \emph{G} $\leftarrow$ a Graph $\langle V,E\rangle$
+                \COMMENT{create a dependency graph}
         \FOR{$i\leftarrow 1,\cdots,n$}
-            \IF {$t_i.s_1$ is an \emph{assignment}}
-            \STATE add $t_i.s_1$ to the head of $t.S$
-            \ENDIF
-            \STATE $p$ $\leftarrow$ the first \emph{perform} statement
-            \WHILE {$p$ $\neq$ \emph{null}}
-                \STATE $a\leftarrow$ the \emph{assignment} statement after $p$
-                \STATE $p'\leftarrow$ the next \emph{perform} statement after $p$
-                \IF {$p\in t.S$}
-                    \STATE insert $a$ to $t.S$ exactly after $p$
-                    \STATE remove $p$ from $t.S$
-                \ENDIF
-            \ENDWHILE
+            \STATE add $\bot_i, \top_i$ to \emph{G.V}
+            \STATE \emph{lasts} $\leftarrow\{\bot_i\}$
+            \FOR {$j\leftarrow 1, 3, \cdots, len(t_i.S) - 1$}
+                \STATE \emph{ports} $\leftarrow$ all the performed ports in $t_i.S_{j+1}$
+                \FOR {$l\in lasts, p\in ports$}
+                    \IF {$p\not\in G.V$}
+                        \STATE add $p$ to $G.V$
+                    \ENDIF
+                    \STATE add edge $l \xrightarrow{t_i.S_j} p$ to \emph{G.E}
+                \ENDFOR 
+            \ENDFOR
+            \FOR {$l\in lasts$}
+                \STATE add edge $l \xrightarrow{t_i.S_{len(t_i.S)}} \top_i$ to \emph{G.E}
+            \ENDFOR 
         \ENDFOR
-        \STATE $t\leftarrow$ \texttt{Canonicalize($t$)}
+        \STATE
+        \IF{($G$ comprises a ring) \emph{or} ($\exists v\in G.v$ is a port whose \emph{degree} $\neq 4$)}
+            \STATE $t\leftarrow null$
+        \ELSE
+            \STATE $t.S\leftarrow\{$ select all the statements in $G.E$ using topological sort $\}$
+            \STATE replace \texttt{perform P} in $t.S$ with \texttt{P.reqRead, P.reqWrite := false, false}
+        \ENDIF
     \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[H]
-    \caption{Compose Several Automatons}
-    \label{alg:compose}
-    \begin{algorithmic}[1]
-        \REQUIRE $A_1,A_2,\cdots,A_n$ are automata
-        \ENSURE $A=\mbox{\texttt{Compose}}(A_1,\cdots,A_n)$
-        \STATE rename local variables in $A_1,\cdots,A_n$ to avoid duplicated names
-        \STATE $A \leftarrow $ empty automaton
-        \STATE $ext\_trans\leftarrow \{\}$
-        \FOR{$i\leftarrow 1,2,\cdots,n$}
-            \STATE add all local variables of $A_i$ to $A$
-            \STATE add all internal transitions of $A_i$ to $A$
-            \STATE add all external transitions of $A_i$ to $ext\_trans$
-        \ENDFOR
-        \FOR{$set\_trans\leftarrow$ subset of $ext\_trans$}
-            \STATE $newedge\leftarrow \mbox{\texttt{Schedule}}(set\_trans)$ 
-            \IF{\emph{newedge $\neq$ null}}
-                \STATE add \emph{newedge} to $A$
-            \ENDIF
-        \ENDFOR
-    \end{algorithmic}
-\end{algorithm}
+Line 25 shows several situations where the synchronization process fails,
+\begin{enumerate}
+    \item The generated graph includes a \emph{ring}, which is a sign of \emph{circular dependencies}. For example, in one transition \texttt{perform A} shows up earlier than \texttt{perform B}, but in another transition the order is reversed.
+    \item The generated graph includes a non-trivial vertex (labelled by a perform statement) whose degree is not equal to $4$. In other words, a port is not properly synchronized or synchronized with more than two transitions. 
+    % TODO:
+\end{enumerate}
+
+Topological sorting, as we all knows, may generate different schedules for the same graph. The following theorem shows that all these schedules are equivalent as transition statements.
+
+\begin{theorem}[Equivalence between Schedules] If two set of assignment statements $S_1, S_2$ are generated from the same set of external transitions, they have exactly the same behavior.
+\end{theorem}
+
+% TODO 1. a transition - a function
+% TODO 2. they are equivalent in form of functions
 
 \subsection{Automaton as Labelled Transition System}
 
