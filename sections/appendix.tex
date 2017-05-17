@@ -6,17 +6,24 @@
 \begin{proof}
     Apparently, when executing statements, all the changes on configurations come from \emph{assignments}. Once we successfully prove that for each assignment, its pre-configuration and post-configuration in $S_1$ and $S_2$ are exactly the same, we are able to finish this proof.
     
-    In the following proof, we denote $S_1$ and $S_2$ by $S_1=\{s_1,\cdots,s_n\},S_2=\{s'_1,\cdots,s'_n\}$, and the automaton that a transition belongs to by $Automaton(s)$.
+    In the following proof, we denote $S_1$ and $S_2$ by $S_1=\{s_1,\cdots,s_n\},S_2=\{s'_1,\cdots,s'_n\}$, and the automaton that a transition belongs to by $Automaton(s)$. We try to use an inductive approach to prove the hypothesis that \emph{for each assignment $s\in S_1$ and its corresponding assignment $s'\in S_2$, the shared variables it changes have the same evaluation in their post-configurations.}
     \begin{enumerate}
         \item Let's come to the \emph{FIRST} assignment state $s$ in $S_1$ where shared variables is assigned. We assume that its corresponding statement in $S_2$ is $s'$. Comparing $s$ and $s'$, we have:
         \begin{enumerate}
-            \item $s'$ is also the first assignment in $S_2$ which modifies \emph{this set} of variables.
+            \item $s'$ is also the first assignment in $S_2$ which modifies \emph{this set} of assigned variables.
             \emph{(A shared variable can be assigned in one of its owner, thus all assignments that modifies this variable belong to the same transition, and their order is strictly maintained.)}
-            \item $s$ and $s'$ include no reference to other shared variables. \emph{(A shared variable can be dereferenced only when it has been assigned before, however $s$ is the first assignment which modifies a shared variable.)}
+            \item $s$ and $s'$ include no reference to other shared variables. \emph{(A shared variable can be referenced only when it has been assigned before, however $s$ is the first assignment which modifies a shared variable.)}
             \item In the pre-configuration of $s$ and $s'$, all the local variables of $Automaton(s)$ have the same evaluation. \emph{(Derived from the same reason in (a))}.
         \end{enumerate}
         Consequently, in the post-configuration of $s$ and $s'$, all the shared variables have the \emph{SAME} evaluation.
 
-        \item Assume that all assignments (to shared variables) in $s_1,\cdots,s_i$ have been proved that satisfy the proposition, now we are going to prove that $s$, the first transition where shared variables are dereferenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy it.
+        \item Assume that all assignments (to shared variables) in $s_1,\cdots,s_i$ have been proved to satisfy the hypothesis, now we are going to prove that $s$, the first transition where shared variables are referenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy the hypothesis.
+
+        \begin{enumerate}
+            \item In the pre-configuration of $s$ and $s'$, all the shared variables that are referenced in $s$ and $s'$ have the \emph{SAME} evaluation. \emph{(Thanks to the assumption, all assignments to shared variables in $s_1,\cdots,s_i$ share the same evaluation (on referenced variables only) with their corresponding assignments in $s'$. And on the other hand, for any assignments to the referenced shared variables in $S_2$, its index in $S_1$ must be less than $s$, and in turn satisfy the hypothesis due to the assumption.)}
+            \item In the pre-configuration of $s$ and $s'$, all the local variables of $Automaton(s)$ have the \emph{SAME} evaluation. \emph{(Derived by the same reason as in 1.(c))}
+        \end{enumerate}
+
+        It's apparent that in the post-configuration of $s$ and $s'$, all the \emph{assigned} shared variables have the \emph{SAME} evaluation.
     \end{enumerate}
 \end{proof}
