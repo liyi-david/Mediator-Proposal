@@ -1,9 +1,9 @@
 \documentclass{llncs}
 
 % name of the language
-\newcommand{\lang}[0]{MediatE}
+\newcommand{\lang}[0]{Mediator}
 
-\title{A New Coordination Language \lang{}}
+\title{Component-Based Modeling in \lang{}}
 
 \author{Yi Li\and Meng Sun}
 \institute{LMAM and Department of Informatics, School of Mathematical Sciences, Peking University, Beijing, China \\
@@ -18,21 +18,22 @@
 \maketitle
 
 \begin{abstract}
-In this paper, we presents \lang{} that intends to provide a two-step modeling approach in component-based software engineering. \lang{} is a formal modeling language where we take \emph{automata}  as basic behavioral units. Equipped with a rich-featured type system and template mechanism, automata are capable to model generic components and connectors. Such components and connectors are organized through \emph{systems}. The language makes it easy to construct complex models with simply reuse of existing elements, where their formal nature are still maintained. 
+In this paper, we propose a new language \lang{} to describe component-based models. \lang{} provides a two-step modeling approach, where we take \emph{automata} as the basic behavioral units. Equipped with a rich-featured type system and template mechanism, automata are capable to model generic components and connectors. Such components and connectors are organized through \emph{systems}. The language makes it easy to construct complex models with simply reuse of existing elements, where their formal nature are still maintained. 
 \end{abstract}
 
-\section{Introduction}
-
+\input[sections/introduction]
 % \input{sections/overview}
 \input{sections/grammar}
 \input{sections/semantics}
 \input{sections/casestudy}
 
 \section{Conclusion and Future Work}
+\label{sec:conclusion}
 
 \bibliographystyle{splncs03}
-\bibliography{fm}
+\bibliography{fm,local}
 
+\newpage
 \input{sections/appendix}
 
 \end{document}

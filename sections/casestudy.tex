@@ -27,9 +27,7 @@ The algorithm mainly includes the following steps:
 
 Here we formalize this algorithm through a more general approach. Leader election is encapsulated as \texttt{connector} since it is also responsible to handle the communication between processes. A computing module \texttt{main} is attached to the connector, and used to model computing tasks. 
 
-Two types of messages, \texttt{msgVote} and \texttt{msgLocal}, are supported when formalizing this architecture.
-\begin{example}[Definition of Message Types]
-Voting messages \texttt{msgVote} are transferred between the connectors. A voting message carries two fields, \emph{vtype} that declares the stage of leader election (either it is still voting or some process has already been acknowledged) and a \emph{id} an identifier of the current leader (if have).
+Two types of messages, \texttt{msgVote} and \texttt{msgLocal}, are supported when formalizing this architecture. Voting messages \texttt{msgVote} are transferred between the connectors. A voting message carries two fields, \emph{vtype} that declares the stage of leader election (either it is still voting or some process has already been acknowledged) and a \emph{id} an identifier of the current leader (if have). On the other hand, \texttt{msgLocal} is used when a worker want to communicate with its corresponding connector.
 \begin{lstlisting} 
 typedef struct { vtype: enum {vote, ack}, id: int } as msgVote;
 typedef struct {
@@ -38,16 +36,23 @@ typedef struct {
 	idLeader : int | NULL
 } as msgLocal;
 \end{lstlisting}
-\end{example}
+
 
 
 \begin{lstlisting}
 automaton <id:int> election_module (
 	left  : in msgVote,  right  : out msgVote,
-	query : in msgLocal, notice : out msgLocal
+	query : out msgLocal
 ) { ... }
+\end{lstlisting}
 
-system cluster_instance() {
+The following code fragment encodes a parallel program containing 3 workers and their corresponding election\_modules. It is a simplified version of the one in Figure. \ref{fig:leaderelection}. In this example, \emph{worker}, the main calculating, is passed as a parameter since we expect that this system should be capable handling different working process.
+
+As we are modeling the leader election algorithm on a synchronous ring, only synchronous communications channel \emph{Sync}s are involved in this example. \emph{Sync} is a Reo channel in the first, but also modeled as an \emph{automaton} in our framework. It's implementation details can be found in \cite{medmodels}.
+% TODO:
+
+\begin{lstlisting}
+system <worker: interface (query:in msgLocal)> parallel_instance() {
 	components {
 		E1 : election_module<1>; E2 : election_module<2>;
 		E3 : election_module<3>;
@@ -59,11 +64,8 @@ system cluster_instance() {
 		Sync<msgVote>(E3.right, E1.left );
 		
 		Sync<msgLocal>(C1,query,  E1.query );
-		Sync<msgLocal>(C1,notice, E1.notice);
 		Sync<msgLocal>(C2,query,  E2.query );
-		Sync<msgLocal>(C2,notice, E2.notice);
 		Sync<msgLocal>(C3,query,  E3.query );
-		Sync<msgLocal>(C3,notice, E3.notice);
 	}
 }
 \end{lstlisting}

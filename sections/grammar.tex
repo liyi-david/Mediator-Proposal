@@ -1,12 +1,17 @@
 \section{Syntax of \lang{}}
 \label{sec:syntax}
 
+In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown in the following block, essentially contains several parts,
 \begin{bnf}
-    \ntsym{program} ::=  (& \ntsym{import} | \ntsym{typedef} | \ntsym{function} \\
-    |& \ntsym{automaton} | \ntsym{system})^*
+    \ntsym{program} ::=  (& \ntsym{typedef} | \ntsym{function} | \ntsym{automaton} | \ntsym{system})^*
 \end{bnf}
 
-In the following subsections, we are going to take a simple \emph{queue} as an example, to illustrate how certain language elements are used to compose a model.
+\begin{enumerate}
+    \item \emph{Typedef}s that give aliases to specified types.
+    \item \emph{Function} definitions that defines customized functions.
+    \item \emph{Automaton} blocks that describe an automaton with given parameters.
+    \item \emph{System} blocks to compose automata as components or connections.
+\end{enumerate}
 
 \subsection{Type System}
 \label{subsec:typesystem}
@@ -210,7 +215,7 @@ Since a single transition $g\rightarrow S$ can be equivalently written as a sing
 Theoretically, an automaton in \lang{} is powerful to represent any classical software system (without consideration of time and probability, of course). However, modeling complex systems in transitions and tons of local variables may become a real disaster. That's why we are going to introduce a new block, called \emph{system}, to help reuse existing automata (systems as well), and construct clear and comprehensible high-level models.
 
 % TODO: add references
-To solve this problem, hierarchical diagrams are widely used in various modeling tools (SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink and LabVIEW) and formal languages (Reo\cite{ArbabMscs2004}, AADL). In such diagrams, blocks can be declared as \emph{components} and organized by a set of connections to capture more powerful behavior, where these connections are called \emph{channels}. Figure. \ref{fig:diagram} gives a simple diagram of a message-oriented middleware, where a queue work as a connector to coordinate between the components (message producers and consumers).
+To solve this problem, hierarchical diagrams are widely used in various modeling tools (SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink and LabVIEW) and formal languages (Reo\cite{ArbabMscsReo2004}, AADL). In such diagrams, blocks can be declared as \emph{components} and organized by a set of connections to capture more powerful behavior, where these connections are called \emph{channels}. Figure. \ref{fig:diagram} gives a simple diagram of a message-oriented middleware, where a queue work as a connector to coordinate between the components (message producers and consumers).
 % TODO maybe not so commonly known?
 
 \begin{figure}

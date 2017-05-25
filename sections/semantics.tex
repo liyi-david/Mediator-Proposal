@@ -4,7 +4,7 @@
 In the section, we introduce the formal semantics of \lang{} by four steps.
 \begin{enumerate}
     \item Use \emph{configurations} to formally describe the state of a automaton.
-    \item Convert an automaton to its canonical form, wiping out the dependency on language features \emph{alternative, urgent and ordered}.
+    \item Convert an automaton to its canonical form.
     \item Provide an algorithm that flats a complex system to an automaton.
     \item Specify a transition-system-based semantics to \lang{} automata.
 \end{enumerate}
@@ -23,6 +23,7 @@ A valuation of a set of variables $V$ is defined as a function $v$ that satisfie
 
 \begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. We use $Conf(A)$ to denote all the configurations of $A$.
 \end{definition}
+
 
 \subsection{Canonical Form of Transitions and Automata}
 \label{subsec:canonical}
