@@ -6,6 +6,7 @@ In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown
     \ntsym{program} ::=  (& \ntsym{typedef} | \ntsym{function} | \ntsym{automaton} | \ntsym{system})^*
 \end{bnf}
 
+% TODO: make it clear
 \begin{enumerate}
     \item \emph{Typedef}s that give aliases to specified types.
     \item \emph{Function} definitions that defines customized functions.
@@ -17,8 +18,7 @@ In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown
 \label{subsec:typesystem}
 \lang{} provides a rich-featured type system that supports various commonly-used data types in both formal modeling languages and programming languages.
 
-\vspace{0.3em}
-\noindent\emph{Primitive Type.} Table. \ref{table:primitivetypes} shows the primitive types supported in \lang{}.
+\smalltitle{Primitive Types} Table. \ref{table:primitivetypes} shows the primitive types supported in \lang{}.
 
 \begin{table}
     \caption{Primitive Data Types}
@@ -38,7 +38,7 @@ In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown
     \end{tabular}
 \end{table}
 
-\noindent\emph{Composite Type.} Composite type offers an approach to contruct complex data types with simpler ones. Several composite patterns are introduced as follows,
+\noindent\emph{Composite Types.} Composite types offer an approach to contruct complex data types with simpler ones. Several composite patterns are introduced as follows,
 
 \begin{table}
     \caption{Composite Data Types (\texttt{T} denotes an arbitrary data type)}
@@ -85,11 +85,21 @@ automaton <T:type,size:int> Queue(A:in T, B:out T) {
     ...
 }
 \end{lstlisting}
+\label{exp:typeinqueue}
 \end{example}
 
+\noindent\emph{Parameter Types}. On many occasions, you may want to define a generalizable structure that includes a template function or template component. For example, a binary operator that support various operation ($+$,$\times$, etc.), or an encrypted communication system that can make use of different encryption components. Parameter types make it able to take functions and components (or systems, of course) as a template parameter. But such types will be resolved in instantiation, and hence can only be used in templates of instantiable structures (automata and systems). 
+\begin{enumerate}
+    \item \emph{An Interface}, denoted by \texttt{interface (port$_1$:T$_1$,$\cdots,$port$_n$:T$_n$)}, defines a parameter that could be any \emph{automaton} or \emph{system} that have exactly the same interface (i.e. both number and directions of the ports are matching).
+    \item \emph{A Function}, denoted by \texttt{func (arg$_1$:T$_1$,$\cdots, $arg$_n$:T$_n$) : T}， defines a function that have the same argument types and return types.
+\end{enumerate}
+In Example. \ref{exp:clustersystem} we have a system with a \emph{interface} parameter.
+
 \subsection{Functions}
+Functions make it able to encapsulate complex computations and reuse them. In \lang{}, the functions are a bit different from common programming languages -- they include no control statements but assignments. This design makes functions' behavior more predictable (i.e. it can be simplified into a single mathematical representation). For the same reason, functions have access only to its local variables and arguments.
 
 The abstract syntax tree of functions is shown as follows.
+
 \begin{bnf}
     \ntsym{funcDecl} ::= & \tsym{function} \ntsym{template}^? \ntsym{identifier} \tsym{(} \ntsym{arguments} \tsym{)} \tsym{\{} \\
     & (\tsym{variables} \tsym{\{} \ntsym{varDecl}^* \tsym{\}})^? \\
@@ -98,18 +108,19 @@ The abstract syntax tree of functions is shown as follows.
     \ntsym{returnStmt} ::= & \tsym{return} \ntsym{term} \\
     \ntsym{varDecl} ::= & \ntsym{identifier} \tsym{:} \ntsym{type} (\tsym{init} \ntsym{term})^? 
 \end{bnf}
-Basically, definition of a function includes:
-\begin{itemize}
-    \item An optional template including a set of parameters. A parameter can be either a type parameter (decorated by \texttt{type}) or a value parameter (decorated by its type). All possible parameter values of a function should be located statically.
-    % TODO: how?
-    Parameters in the template can be used in all the following language elements, e.g. type of input variables and return value, local variables and function statements.
-    \item An identifier that indicates the name of this function.
-    \item A set of read-only input variables.
-    \item A optional set of local variables.
-    \item A list of ordered statements that describes how the return value is calculated. Such a list must be ended by a \texttt{return} statement.
-\end{itemize}
-Functions in \lang{} are side-effect free. In other words, only local variables are writable in its assignment statements.
-\begin{example}[Incline Operation on a Queue Pointer] The simple function describes how pointers are inclined. When a pointer is going to exceed its upper bound (determined by the parameter \emph{size}), we will reset it to zero.
+
+Basically, definition of a function includes the following parts.
+
+\smalltitle{Template} A function may contains an optional template including a set of parameters. A parameter can be either a \emph{type} parameter (decorated by \texttt{type}) or a \emph{value} parameter (decorated by its type). Values of the parameters should be determined in compiling-time. Once a parameter is declared, it can be referenced in all the following language elements, e.g. \emph{a) the following parameter declarations}, \emph{b) arguments and return types} and \emph{c) function statements.}
+
+\smalltitle{Name} An identifier that indicates the name of this function.
+
+\smalltitle{Type} Type of a function (\texttt{func} type in Section. \ref{subsec:typesystem}) is determined by its \emph{a) number of arguments, b) type of arguments and c) type of return value.} Note that here the arguments are read-only. In other words, any assignment to an argument is strictly prohibited.
+
+\smalltitle{Body} Body of a function includes an optional set of local variables and a list of ordered statements that describes how the return value is calculated. It must be ended by a \texttt{return} statement.
+
+
+\begin{example}[Incline Operation on Bounded Integers] Incline operation of pointers are commonly used in a \emph{round-robin} queue, where storage are reused circularly. The \texttt{next} function shows that how pointers in such queues (denoted by a bounded integer) incline. 
     \label{exp:successor_function}
     \begin{lstlisting}
 function <size:int> next(pcurr:int 0..(size-1)) : int 0..(size-1) {
@@ -120,7 +131,7 @@ function <size:int> next(pcurr:int 0..(size-1)) : int 0..(size-1) {
 
 % TODO: a more complicated function
 
-\subsection{Automata : The Basic Behavioral Unit}
+\subsection{Automaton : The Basic Behavioral Unit}
 
 \begin{bnf}
     \ntsym{automaton} ::=& \tsym{automaton}\ntsym{template}^?\ntsym{identifier} \tsym{(} \ntsym{port}^* \tsym{)} \tsym{\{}\\
@@ -129,45 +140,52 @@ function <size:int> next(pcurr:int 0..(size-1)) : int 0..(size-1) {
     \ntsym{port} ::=& \ntsym{identifier} \tsym{:} (\tsym{in}|\tsym{out}) \ntsym{type} \\
     \ntsym{transition} ::=& \ntsym{guardedStmt} | \tsym{group} \tsym{\{} \ntsym{guardedStmt}^* \tsym{\}}\\
     \ntsym{guardedStmt} ::=& \ntsym{term} \tsym{->} (\ntsym{stmt} | \tsym{\{} \ntsym{stmt}^* \tsym{\}}) \\
-    \ntsym{stmt} ::=& \ntsym{term} \tsym{:=} \ntsym{term} | \tsym{perform} \ntsym{identifier}^+
+    \ntsym{stmt} ::=& \ntsym{term} \tsym{:=} \ntsym{term} | \tsym{sync} \ntsym{identifier}^+
 \end{bnf}
 
-\vspace{0.2cm}
-\noindent \emph{Template.} Very similar to functions, a automaton can also be decorated with a set of template parameters, either value parameters or type parameters.
+\smalltitle{Template} Compared with templates in functions, template in an automaton supports more type of parameters. Interfaces and functions, for example.
 
-\vspace{0.2cm}
-\noindent \emph{Ports.} Each automaton contains a set of ports, either \texttt{in}-coming or \texttt{out}-going, to communicate with the environment. To ensure the well-defineness of automata, ports are required to have an \emph{initialized} type, e.g. \texttt{int 0..1 init 0} instead of \sout{\texttt{int 0..1}}.
+\smalltitle{Name} The identifier of automaton.
 
-\vspace{0.2cm}
-\noindent \emph{Variables.} Two types of variables are used in a automaton definition, they are:
+\smalltitle{Type} Type of an automaton (an \texttt{interface} type in Section \ref{subsec:typesystem}) is determined by the \emph{number} and \emph{type}s of its ports. Type of a port in an automaton contains a prefix, either \texttt{in} or \texttt{out}, indicating the direction of its data-flow, and a normal data type as a suffix. To ensure the well-defineness of automata, ports are required to have an \emph{initialized} type, e.g. \texttt{int 0..1 init 0} instead of \sout{\texttt{int 0..1}}.
+
+\smalltitle{Variables} Two types of variables are used in a automaton definition, they are:
 \begin{enumerate}
-    \item \emph{Local variables} that are declared in the \emph{variables} section. A local variable can only be referenced in its scope, i.e. the automaton definition. And similar to the ports, only initialized types are permitted when declaring local variables.
-    \item \emph{Adjoint variables} that are used to describe the status of ports. For a port A, we assume that it has two boolean fields \texttt{A.reqRead} and \texttt{A.reqWrite} indicating if there is a pending \emph{read} or \emph{write} request on this port, and a data field \texttt{A.value} indicating the current value of this port (if a write operation is performed, \texttt{A.value} will be reassigned).
+    \item \emph{Local variables} that are declared in the \emph{variables} section. 
+    \item \emph{Adjoint variables} used to describe the status of ports. Syntactically, they are denoted as built-in fields of ports. For example, considering a port A, we assume that it has two boolean fields \texttt{A.reqRead} and \texttt{A.reqWrite} indicating if there is a pending \emph{read} or \emph{write} request on this port, and a data field \texttt{A.value} indicating the current value of this port.
 \end{enumerate}
 
-A reasonable rule comes up that, both the \texttt{reqWrite} field of a input port and the \texttt{reqRead} field of a output port are \emph{read-only}. Similarly, we cannot rewrite the \texttt{value} field of a input port.
+We require that for an output port the \texttt{reqRead} field is read-only and the \texttt{reqWrite} field is writable. Similarly, for an input port the \texttt{reqRead} field is writable but its \texttt{reqWrite} field is read-only. The \texttt{value} field can be overwritten only in an output port.
 
-\smalltitle{Transitions} Similar to the PRISM\cite{KwiatkowskaCav2011} language, behavior of a channel in \lang{} is described by a series of guarded transitions (groups). As shown in  Example \ref{exp:trans_queue}, a \emph{transition} comprises two parts: a boolean term \emph{guard} that shows on what condition the transition could be fired, and a (set of) statement(s) that describe what will happen if the transition is fired. Two types of statements are supported in automata,
+\smalltitle{Transitions}
+In \lang{}, behavior of a automaton is described by a set of guarded transitions (groups), with no explicit concept of locations. As shown in  Example \ref{exp:trans_queue}, a \emph{transition} (denoted by \emph{guard} \texttt{->} \emph{statements}) comprises two parts, a boolean term \emph{guard} that declares the activating condition of this transition, and a (set of) statement(s) that describe how the variables are updated when the transition is fired.
+
+Currently, we have two types of statements supported in automata, they are:
 \begin{itemize}
-    \item \emph{Assignment Statements} (\texttt{var$_1$,...,var$_n$ := term$_1$,...,term$_n$}). Local variables and writable adjoint variables are permitted to be assigned here. We can also assign several variables at the same time (similar to the tuple assignment in Python).
-    \item \emph{Perform Statements} (\texttt{perform port$_1$,...,port$_n$}). Informally speaking, perform statements tell the environment to fire data operations on the output ports, or wait until being noticed that data operation on the input ports are fired by the environment (other automata, actually). Consequently, it's reasonable to require that the value of an input port should never be referred until the port is performed. Similarly, the value of an output port should never be assigned after the port is performed. Perform statements are mainly used when combining multiple automata, where they determine how transitions are synchronized. (See in Section \ref{subsec:composition})
+    \item \emph{Assignment Statement} (\texttt{var$_1$,...,var$_n$ := term$_1$,...,term$_n$}). An assignment statement supports multiple assignments at the same time, where local variables and writable adjoint variables are permitted to be assigned.
+    \item \emph{Synchronizing Statement} (\texttt{sync port$_1$,...,port$_n$}). Synchronizing statements are synchronizing \emph{flag}s used when joining multiple automata. More details about synchronizing statements are introduced in Section \ref{subsec:composition}.
 \end{itemize}
 
-A transition is called \emph{external} iff. it synchronizes with the environment through some ports, or \emph{internal} otherwise. Literally, all transitions, where perform statements are involved, are \emph{external} transitions. And in such transitions, the following rules are strictly required to avoid read/write conflicts.
+With the introduction of shared variables, synchronizing transitions in automata joining is not as easy as in traditional automata where all variables are local. Informally speaking, the synchronizing statements are used to create a proper schedule of assignment statements so that assignments of shared variables are performed before referring them.
+
+Synchronizing statements are also important flags to distinguish external transitions and internal transitions. A transition is called \emph{external} iff. it synchronizes with its environment through some ports, or \emph{internal} otherwise. Literally, all transitions, where synchronizing statements are involved, are \emph{external} transitions. In such transitions, the following rules are strictly required to avoid read/write conflicts.
 
 \begin{enumerate}
-    \item Any reference to an input port (A, for example) should be placed after its corresponding perform statement \texttt{perform A}.
-    \item Any reference to an output port (B, for example) should be placed before its corresponding perform statement \texttt{perform B}.
+    \item Any assignment statements including reference to an input port (A, for example) should be placed after its corresponding synchronizing statement \texttt{sync A}.
+    \item Any assignment statements to an output port (B, for example) should be placed before its corresponding synchronizing statement \texttt{sync B}.
 \end{enumerate}
 
 \begin{formalization}[Transitions]
 Formally, we use $g\rightarrow S$ to denote a transition, where $g$ is the guard formula and $S=\{s_1,\cdots,s_n\}$ is a set of statements. 
 \end{formalization}
+Different from a typical automaton, transitions in \lang{} automata are organized with \emph{priority}. A transition has higher priority iff. it is placed in front of the other one. And when multiple transitions are activated by the environment, the one with highest priority will be fired first. For example, suppose $g_1\rightarrow S_1,\cdots,g_n\rightarrow S_n$ is a list of transitions, we could use an equivalent form to rewrite them as the followings, where priority is not required any more.
+\[
+    g_1\rightarrow S_1, \lnot g_1\land g_2\rightarrow S_2,\cdots,\lnot g_1\land \lnot g_2\land\cdots\land \lnot g_{n-1} \land g_n\rightarrow S_n
+\]
 
-Here we present an example to show how transitions are used to model the behavior of a queue.
-\begin{example}[Transitions in Queue] In a \texttt{Queue}, we use internal transitions to formalize the changes of its state. For example, becoming writable when buffer is not full, and readable when buffer is not empty. External transitions, on the other hand, mainly show how the read and write operations are performed.
+\begin{example}[Transitions in Queue] In a queue, we use internal transitions to capture the changes of environment and perform corresponding updates consistently. For example, the input port $A$ (already defined in Example. \ref{exp:typeinqueue}) becomes ready to read (i.e. \texttt{reqRead} set to \emph{true}) when the buffer is not full, and the output port $B$ becomes ready to write when the buffer is not empty, and vice versa. External transitions, on the other hand, mainly show the details of the read and write operations.
 \begin{lstlisting}
-// Internal Transitions
+// internal transitions
 B.reqWrite && (buf[ptail] == null) -> B.reqWrite := false;
 !B.reqWrite && (buf[ptail] != null) -> B.reqWrite := true;
 A.reqRead && (buf[phead] != null) -> B.reqRead := false;
@@ -175,25 +193,18 @@ A.reqRead && (buf[phead] != null) -> B.reqRead := false;
 
 // enqueue operation (as an external transition)
 (A.reqRead && A.reqWrite) -> {
-    perform A; buf[phead] := A.value; phead := next(phead);
+    sync A; buf[phead] := A.value; phead := next(phead);
 }
 // dequeue operation (as an external transition)
 (B.reqRead && B.reqWrite) -> {
-    B.value := buf[ptail]; ptail := next(ptail); perform B;
+    B.value := buf[ptail]; ptail := next(ptail); sync B;
 }
 \end{lstlisting}
 \label{exp:trans_queue}
+% TODO: explain the transitions
 \end{example}
 
-% TODO: use a better representation
-All the transitions are supposed to have the following features. They are declared on the syntax level, i.e. we will resolve this feature when discussing the formal aspect of \lang{} and use a simple and standard automata model to capture all these features (see in Section. \ref{sec:semantics}).
-
-\begin{itemize}
-    \item \emph{Urgent}. In some formal models, e.g. CSP\cite{HoareCsp1985} and Timed Automata\cite{AlurTcs1994}, transitions may not be triggered even the guard is satisfied. On contrast, such behavior is strictly prohibited in our model. Once a transition is activated (i.e. its guard is satisfied), it have to be fired unless another guard with higher priority is also activated.
-    \item \emph{Ordered}. An automaton may includes a set of transitions. They are ordered by their appearance. In other words, if several transitions are activated at the same time, the literally former one will be fired first.
-\end{itemize}
-
-Priority of transitions make the automaton fully deterministic. However, in some cases non-determinism is still rather necessary. \emph{Transition groups} are, consequently, imported to represent such behavior. Transitions in the same group do not follow the ordering rule. Instead, the group itself is literally ordered w.r.t. other groups and ungrouped transitions.
+Priority of transitions make the automaton fully deterministic. However, in some cases non-determinism is still more than necessary. \emph{Transition groups} are, consequently, imported to handle such cases. When encapsulated by a group, transitions are unordered and don't ruled by priority. Instead, the group itself is literally ordered w.r.t. other groups and single transitions (basically we can take all single transitions as a trivial transition group).
 
 \begin{formalization}[Transition Groups]
     A transition group $t_G$ can be formalized as a finite list of guarded transitions
@@ -201,12 +212,31 @@ Priority of transitions make the automaton fully deterministic. However, in some
         t_G=\{t_1,\cdots, t_n\}, t_i=g_i\rightarrow S_i
     \]
     where $t_i$ is a single transition with guard $g_i$ and a set of statements $S_i$.
+    \label{fmz:tgroup}
 \end{formalization}
 
 Since a single transition $g\rightarrow S$ can be equivalently written as a singleton group $\{g\rightarrow S\}$, it's acceptable if we assume that each automaton comprises a set of transition groups but no standalone transitions.
 
+\begin{example}[Yet Another Queue Implementation] Let's consider the external transitions in Example. \ref{exp:trans_queue} which captures the core behavior of a queue. When both reading and writing operations are activated, in that example, reading will always be fired first. Such a queue may get stuff up immediately when requests start accumulating. But here we presents another non-deterministic implementation based on transition groups to solve this problem.
+\begin{lstlisting}
+group {
+    // enqueue operation (as an external transition)
+    (A.reqRead && A.reqWrite) -> {
+        sync A; buf[phead] := A.value; phead := next(phead);
+    }
+    // dequeue operation (as an external transition)
+    (B.reqRead && B.reqWrite) -> {
+        B.value := buf[ptail]; ptail := next(ptail); sync B;
+    }
+}
+\end{lstlisting}
+\label{exp:transgroup_queue}
+\end{example}
+
+With all the language elements of an automaton properly formalized, now we introduced the formalization of a complete automaton.
+
 \begin{formalization}[Automata]
-    We use a tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton, where $Ports$ is a set of ports, $Vars$ is a set of local variables and $Trans_G=\{t_{G_1},\cdots,t_{G_n}\}$ is a set of transition groups.
+    We use a tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton, where $Ports$ is a set of ports, $Vars$ is a set of local variables and $Trans_G=\{t_{G_1},\cdots,t_{G_n}\}$ is a set of transition groups that are defines in Formalization. \ref{fmz:tgroup}.
 \end{formalization}
 
 \subsection{System : The Composition Approach}

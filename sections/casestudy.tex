@@ -51,6 +51,7 @@ The following code fragment encodes a parallel program containing 3 workers and 
 As we are modeling the leader election algorithm on a synchronous ring, only synchronous communications channel \emph{Sync}s are involved in this example. \emph{Sync} is a Reo channel in the first, but also modeled as an \emph{automaton} in our framework. It's implementation details can be found in \cite{medmodels}.
 % TODO:
 
+\begin{example}[A Complete Cluster System with 3 Instances]
 \begin{lstlisting}
 system <worker: interface (query:in msgLocal)> parallel_instance() {
 	components {
@@ -69,3 +70,5 @@ system <worker: interface (query:in msgLocal)> parallel_instance() {
 	}
 }
 \end{lstlisting}
+\label{exp:clustersystem}
+\end{example}
