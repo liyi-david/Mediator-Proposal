@@ -152,7 +152,7 @@ function <size:int> next(pcurr:int 0..(size-1)) : int 0..(size-1) {
 \smalltitle{Variables} Two types of variables are used in a automaton definition, they are:
 \begin{enumerate}
     \item \emph{Local variables} that are declared in the \emph{variables} section. 
-    \item \emph{Adjoint variables} used to describe the status of ports. Syntactically, they are denoted as built-in fields of ports. For example, considering a port A, we assume that it has two boolean fields \texttt{A.reqRead} and \texttt{A.reqWrite} indicating if there is a pending \emph{read} or \emph{write} request on this port, and a data field \texttt{A.value} indicating the current value of this port.
+    \item \emph{Adjoint variables} used to describe the status of ports. Syntactically, they are denoted as built-in fields of ports. For example, considering a port A, we assume that it has two boolean fields \texttt{A.reqRead} and \texttt{A.reqWrite} indicating if there is a pending \emph{read} or \emph{write} request on this port, and a data field \texttt{A.value} indicating the current value of this port. In this paper, adjoint variables have the same meaning with \emph{shared variables}.
 \end{enumerate}
 
 We require that for an output port the \texttt{reqRead} field is read-only and the \texttt{reqWrite} field is writable. Similarly, for an input port the \texttt{reqRead} field is writable but its \texttt{reqWrite} field is read-only. The \texttt{value} field can be overwritten only in an output port.
@@ -249,7 +249,7 @@ Theoretically, an automaton in \lang{} is powerful enough to represent any class
 As we have mentioned previously, \lang{} is designed to help the programmers, even nonprofessionals, to enjoy the convenience of formal tools. To achieve this goal, we introduce a new language element called \emph{system}. Basically, a \emph{system} is a textural format of a hierarchical diagram (see in Figure. \ref{fig:diagram}) where automata and smaller systems are naturally organized as different roles (\emph{component}s or 
 \emph{connection}s). Both \emph{components} and \emph{connectors} (or \emph{channels}) are well-known concepts in component-based software engineering. Though having different names, their semantics all turn out to the same nature, \emph{automata}.
 
-Hierarchical diagrams have already been used in various modeling tools (for example, SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink and LabVIEW) and formal languages (Reo\cite{ArbabMscsReo2004}, AADL). However, in most tools, connections are simply synchronous link that seal two ports together. Inspired by Reo, we make it able to declare an automaton as a connection, which lead to more powerful and intuitive diagrams. 
+Hierarchical diagrams have already been used in various modeling tools (for example, SCADE\cite{AbdullaISoLA2006,BerryScp1992}, Simulink\cite{hahn2016essentialsimulink} and LabVIEW\cite{labview}) and formal languages (Reo\cite{ArbabMscsReo2004}, AADL). However, in most tools, connections are simply synchronous link that seal two ports together. Inspired by Reo, we make it able to declare an automaton as a connection, which lead to more powerful and intuitive diagrams. 
 
 \begin{example}[Hierarchical Diagram of a Middleware]
     Figure. \ref{fig:diagram} gives a simple diagram of a message-oriented middleware, where a queue work as a connector to coordinate between the components (message producers and consumers).
@@ -313,13 +313,13 @@ Now we introduce the formalization of systems. Since both components and connect
     A system is denoted by a 4-tuple
     \[
         S=\langle Ports, Automata, Internals, Links\rangle
-    \] where $Ports$ is a set of ports, $Automata$ is a set of automata defined in Formalization. \ref{fmz:automata}(both components and connections), $Internals$ is a set of internal nodes and $Links$ is a set of pairs, where each element is a port or an internal node. A link $(p_1,p_2)$ suggests that $p_1$ and $p_2$ are linked together.
+    \] where $Ports$ is a set of ports, $Automata$ is a set of automata defined in Formalization. \ref{fmz:automata}(both components and connections), $Internals$ is a set of internal nodes and $Links$ is a set of pairs, where each element is a port or an internal node. A link $\langle p_1,p_2\rangle)$ suggests that $p_1$ and $p_2$ are linked together.
 \end{formalization}
 A well-defined system satisfies the following assumptions:
 \begin{enumerate}
-    \item $\forall (p_1,p_2)\in Links$, data transfer from $p_1$ to $p_2$. For example, if $p_1\in Ports$ is an input port, $p_2$ could be \emph{a) an output port of the system ($p_2\in Ports$)}, \emph{b) an input port of some automaton $A_i\in Automata$ ($p_2\in A_i.Ports$)} or \emph{c) an internal node ($p_2\in Internals$)}.
-    \item $\forall n\in Internals,\exists!p_1,p_2$ i.e. $(p_1,n),(n,p_2)\in Links$.
-    \item The \emph{type} function can be extended to $Internals$ and satisfies $\forall (p_1,p_2)\in Links, type(p_1)=type(p_2)$.
+    \item $\forall \langle p_1,p_2\rangle \in Links$, data transfer from $p_1$ to $p_2$. For example, if $p_1\in Ports$ is an input port, $p_2$ could be \emph{a) an output port of the system ($p_2\in Ports$)}, \emph{b) an input port of some automaton $A_i\in Automata$ ($p_2\in A_i.Ports$)} or \emph{c) an internal node ($p_2\in Internals$)}.
+    \item $\forall n\in Internals,\exists!p_1,p_2$ i.e. $\langle p_1,n\rangle ,\langle n,p_2\rangle\in Links$.
+    \item The \emph{type} function can be extended to $Internals$ and satisfies $\forall \langle p_1,p_2\rangle\in Links, type(p_1)=type(p_2)$.
 \end{enumerate}
 
 \label{subsec:functions}

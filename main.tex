@@ -18,7 +18,7 @@
 \maketitle
 
 \begin{abstract}
-In this paper we propose a new language \lang{} to describe component-based models. \lang{} provides a two-step modeling approach. \emph{Automata}, encapsulated with a interface of ports, is the basic behavior unit. \emph{Systems} make it able to declare automata as components or connectors, and then glue them together as a more complex model. With help of \lang{}, components and systems can be modeled separately, while the formal nature is still precisely guaranteed. Through some simple examples, we show that this new language can be used in various practical scenarios.
+In this paper we propose a new language \lang{} to formalize component-based models. \lang{} provides a two-step modeling approach. \emph{Automata}, encapsulated with a interface of ports, is the basic behavior unit. \emph{Systems} make it able to declare automata as components or connectors, and then glue them together as a more complex model. With help of \lang{}, components and systems can be modeled separately, while the formal nature is still precisely guaranteed. Through some simple examples, we show that this new language can be used in various practical scenarios.
 \end{abstract}
 
 \input{sections/introduction}
@@ -29,6 +29,14 @@ In this paper we propose a new language \lang{} to describe component-based mode
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
+
+A new modeling language \lang{} is proposed in this paper to help with component-based software engineering through a formal way. With the basic semantics unit \emph{automata} that capture the formal nature of a component, and \emph{systems} for hierarchical composition, the language is easy-to-use for both formal method researchers and system designers.
+
+This paper is a preface of a set of under-development tools. We plan to build a model checking algorithm for a finite subset of \lang{}, and then extend it through symbolic approach. A automatic code-generator is also being built to generate platform-specific codes like \emph{Arduino}.
+
+\section*{Acknowledgements}
+
+The work was partially supported by the National Natural Science Foundation of China under grant no. TBD.
 
 \bibliographystyle{splncs03}
 \bibliography{fm,local}
