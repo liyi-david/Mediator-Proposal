@@ -85,7 +85,7 @@ Internal transitions are easy to handle. Since they do not synchronize with othe
 External transitions, on the other hand, have to synchronize with its corresponding external transitions in other entities. For example, when an automaton want to read some thing from a input port $P_1$, there must be another one is writing something to its output port $P_2$ where $P_1$ and $P_2$ are welded in the system.
 
 \begin{algorithm}[H]
-    \caption{Flattening a System to an Automaton}
+    \caption{\texttt{Flatten} a System into an Automaton}
     \label{alg:compose}
     \begin{algorithmic}[1]
         \REQUIRE A system $S=\langle Ports, Entities, Internals, Links\rangle$
@@ -116,10 +116,10 @@ External transitions, on the other hand, have to synchronize with its correspond
     \end{algorithmic}
 \end{algorithm}
 
-In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} and \texttt{value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to shared variables are performed before they are referenced. Basically, this is a topological sorting problem. A detailed algorithm is described in Algorithm \ref{alg:synchronize}.
+In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} and \texttt{value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to shared variables are performed before the shared variables are referenced. Basically, this is a topological sorting problem. A detailed algorithm is described in Algorithm \ref{alg:synchronize}.
 
 \begin{algorithm}[t]
-    \caption{Scheduling in a Synchronous Set of External Transitions}
+    \caption{\texttt{Schedule} a Set of External Transitions}
     \label{alg:synchronize}
     \begin{algorithmic}[1]
         \REQUIRE A System $S$, a set of external canonical transitions $t_1,t_2,\cdots,t_n$
@@ -158,9 +158,9 @@ In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} an
     \end{algorithmic}
 \end{algorithm}
 
-Algorithm. \ref{alg:synchronize} does not always produce a synchronized transitions. Line 25 shows several situations where the synchronization process fails:
+Algorithm. \ref{alg:synchronize} may not always produce a valid synchronized transition. Line 25 shows several situations where the synchronization process fails:
 \begin{enumerate}
-    \item The dependency graph includes a \emph{ring}, which is a sign of \emph{circular dependencies}. For example, transition \texttt{g$_1$ -> \{sync A;sync B;\}} and transition \texttt{g$_2$ -> \{sync B;sync A;\}}, where both ports require to be triggered first.
+    \item The dependency graph includes a \emph{ring}, which is a sign of \emph{circular dependencies}. For example, transition \texttt{g$_1$ -> \{sync A;sync B;\}} and transition \texttt{g$_2$ -> \{sync B;sync A;\}} cannot be synchronized where both ports require to be triggered first.
     \item The dependency graph includes a non-trivial vertex (neither $\bot$ nor $\top$) whose degree is not equal to $4$. In other words, a port is not properly synchronized or synchronized with more than two transitions (as mentioned in Section. \ref{subsec:system}, any communication happens only between two automata).
 \end{enumerate}
 
@@ -174,13 +174,13 @@ Topological sorting, as we all knows, may generate different schedules for the s
 With all the language elements properly formalized, now we introduce the formal semantics of \emph{automata} based on \emph{labelled transition system}.
 
 \begin{definition}[Labelled Transition System, LTS]
-    A transition system is a tuple $(S,\Sigma,\rightarrow,s_0)$ where $S$ is a set of states with initial state $s_0\in S$, $\Sigma$ is a set of actions, and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reasons, we use $s\xrightarrow{a} s'$ to denote $(s,a,s')\in\rightarrow$.
+    A labelled transition system is a tuple $(S,\Sigma,\rightarrow,s_0)$ where $S$ is a set of states with initial state $s_0\in S$, $\Sigma$ is a set of actions, and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reasons, we use $s\xrightarrow{a} s'$ to denote $(s,a,s')\in\rightarrow$.
 \end{definition}
 
-Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics can be captured by a labelled transition system $\langle S_A, \Sigma_A,\rightarrow_A,s_0\rangle$ where
+Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics can be captured by a LTS $\langle S_A, \Sigma_A,\rightarrow_A,s_0\rangle$ where
 \begin{itemize}
-    \item $S_A$ is the set of all configurations of $A$.
-    \item $s_0$ is the initial configuration where all variables (except \texttt{reqRead} and \texttt{reqWrite}) are initialized with their default value, and \texttt{reqRead} and \texttt{reqWrite} are initialized as \texttt{false}.
+    \item $S_A=Conf(A)$ is the set of all configurations of $A$.
+    \item $s_0\in S_A$ is the initial configuration where all variables (except for \texttt{reqRead}s and \texttt{reqWrite}s) are initialized with their default value, and all \texttt{reqRead}s and \texttt{reqWrite}s are initialized as \texttt{false}.
     \item $\Sigma_A=\{i\}\cup P(Ports)$ is the set of all actions.
     \item $\rightarrow_A\subseteq S_A\times \Sigma_A\times S_A$ is a set of transitions constructed by the following rules.
 \end{itemize}
@@ -193,8 +193,8 @@ Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics c
     \inferrule* [right=R-External] {\{g\rightarrow S\}\in Trans_G\mbox{ is external, } \{s_1,\cdots,s_n\}\mbox{ are the assignments in $S$} \\\vspace{0.2em} \{p_1,\cdots,p_m\}\mbox{ are the synchronized ports}}{(v_{loc}, v_{adj})\xrightarrow{\{p_1,\cdots,p_m\}}_A s_n\circ\cdots\circ s_1(v_{loc},v_{adj})} \\
 \end{mathpar}
 
-The first three rules describe the potential change of context, i.e. the adjoint variables. R-InputStatus and R-OutputStatus shows that the reading status of an output port and status of an input port may changed by the context randomly. And R-InputValue shows that the value of an input port may also be updated.
+The first three rules describe the potential change of environment, i.e. the adjoint variables. R-InputStatus and R-OutputStatus shows that the reading status of an output port and status of an input port may changed by the environment randomly. And R-InputValue shows that the value of an input port may also be updated.
 
 The rule R-Internal models the internal transitions in $Trans_G$. As illustrated previously, an internal transition doesn't contains any synchronizing statement. So its canonical form comprises only one assignment $s$. Firing such a transition will simply apply $s$ to the current configuration.
 
-Meanwhile, R-External models the external transitions, where the automaton need to interact with its context. Fortunately, since all the context change are captured by the first three rules, we can simply regard the context as another set of local variables. Consequently, the only difference between an internal transition and an external transitions is that the later may contains multiple assignments.
+Meanwhile, the rule R-External models the external transitions, where the automaton interact with its environment. Fortunately, since all the environment changes are captured by the first three rules, we can simply regard the environment as another set of local variables. Consequently, the only difference between an internal transition and an external transitions is that the later may contains multiple assignments.

@@ -20,11 +20,11 @@
             \\
             Process ($P_i$) \\
              \\
-            \begin{tikzpicture}
-                \node [draw, rectangle, minimum width=3cm, minimum height=1cm] (connector) at (0,0) {\texttt{connector}};
+            \begin{tikzpicture}[remember picture]
+                \node [draw, rectangle, minimum width=3cm, minimum height=1cm] (connector) at (0,0) {\texttt{election\_module}};
             \end{tikzpicture} \\
             \\
-            \begin{tikzpicture}
+            \begin{tikzpicture}[remember picture]
                 \node [draw, rectangle, minimum width=3cm, minimum height=1cm] (component) at (0,0) {\texttt{main}};
             \end{tikzpicture}
             \vspace{0.5em}

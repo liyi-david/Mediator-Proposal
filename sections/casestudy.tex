@@ -1,7 +1,7 @@
 \section{Case Study}
 \label{sec:casestudy}
 
-In modern distributed computing frameworks (e.g. MPI and ZooKeeper), \emph{leader election} plays an important role to organize multiple servers efficiently and consistently. This section shows how a classical leader election algorithm is modeled and easily used to coordinate other components in \lang{}.
+In modern distributed computing frameworks (e.g. MPI and ZooKeeper), \emph{leader election} plays an important role to organize multiple servers efficiently and consistently. This section shows how a classical leader election algorithm is modeled and reused to coordinate other components in \lang{}.
 
   \cite{HagitDistributed2004} proposed an classical algorithm for a typical leader election scenario, as shown in Figure. \ref{fig:leaderelection}. Distributed processes are organized as a \emph{asynchronous unidirectional} ring where communication take place only between adjacent processes and following certain direction (from left to right in this case).
 
@@ -21,39 +21,48 @@ The algorithm mainly includes the following steps:
 	\begin{itemize}
 		\item forward the message to its successor if it contains a larger \emph{id} than itself,
 		\item ignore the message if it contains a smaller \emph{id} than itself, and
-		\item take itself as a leader if it contains the same \emph{id} with itself.
+		\item take itself as a leader if it contains the same \emph{id} with itself, and broadcast the acknowledgement message.
 	\end{itemize} 
 \end{enumerate}
 
 Here we formalize this algorithm through a more general approach. Leader election is encapsulated as \texttt{connector} since it is also responsible to handle the communication between processes. A computing module \texttt{main} is attached to the connector, and used to model computing tasks. 
 
 Two types of messages, \texttt{msgVote} and \texttt{msgLocal}, are supported when formalizing this architecture. Voting messages \texttt{msgVote} are transferred between the connectors. A voting message carries two fields, \emph{vtype} that declares the stage of leader election (either it is still voting or some process has already been acknowledged) and a \emph{id} an identifier of the current leader (if have). On the other hand, \texttt{msgLocal} is used when a worker want to communicate with its corresponding connector.
-\begin{lstlisting} 
-typedef struct { vtype: enum {vote, ack}, id: int } as msgVote;
-typedef struct {
-	status : enum { pending, acknowledged },
-	idLocal : int,
-	idLeader : int | NULL
-} as msgLocal;
-\end{lstlisting}
-
-
-
-\begin{lstlisting}
-automaton <id:int> election_module (
-	left  : in msgVote,  right  : out msgVote,
+\begin{example}[The Election Module] The following automaton shows how the election algorithm is implemented. Due to the space limit, we omit some transitions that are not so relevant.
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
+automaton <id:int> election_module ( left : in msgVote, right : out msgVote,
 	query : out msgLocal
-) { ... }
+) {
+	variables {
+		leaderStatus : enum { pending, acknowledged } init pending;
+		buffer : (voteMsg | NULL) init {vtype: vote, id:id};
+		leaderId : (int | NULL) init null;
+	}
+	transitions {
+		(buffer != null)&&(buffer.vtype == vote)&&(buffer.id < id) -> {buffer := null;}
+		(buffer != null)&&(buffer.vtype == vote)&&(buffer.id == id) -> {buffer.vtype := ack;}
+		(buffer != null)&&(buffer.vtype == ack)&&(buffer.id < id) -> {
+			// restart voting if the acknowledged leader has a smaller id
+			buffer := { vtype: vote, id: id };
+		}
+		(buffer != null)&&(buffer.vtype == ack)&&(buffer.id >= id) -> {
+			leaderStatus := acknowledged;
+			leaderId := buffer.id;
+			buffer := buffer.id == id ? null : buffer;
+		}
+	}
+}
 \end{lstlisting}
+\end{example}
 
 
-The following code fragment encodes a parallel program containing 3 workers and their corresponding election\_modules. It is a simplified version of the one in Figure. \ref{fig:leaderelection}. In this example, \emph{worker}, the main calculating, is passed as a parameter since we expect that this system should be capable handling different working process.
+The following code fragment encodes a parallel program containing 3 \emph{workers} and 3 \emph{election\_modules} to organize them. It is a simplified version of the one in Figure. \ref{fig:leaderelection}. In this example, \emph{worker}, the main calculating, is passed as a parameter since we expect the system capable of different working process.
 
 As we are modeling the leader election algorithm on a synchronous ring, only synchronous communications channel \emph{Sync}s are involved in this example. \emph{Sync} is a Reo channel in the first, but also modeled as an \emph{automaton} in our framework. It's implementation details can be found in  \cite{medmodels}.
 % TODO:
 
 \begin{example}[A Complete Cluster System with 3 Instances]
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
 system <worker: interface (query:in msgLocal)> parallel_instance() {
 	components {
 		E1 : election_module<1>; E2 : election_module<2>;
@@ -61,9 +70,8 @@ system <worker: interface (query:in msgLocal)> parallel_instance() {
 		C1, C2, C2 : worker;
 	}	
 	connections {
-		Sync<msgVote>(E1.left,  E2.right);
-		Sync<msgVote>(E2.right, E3.left );
-		Sync<msgVote>(E3.right, E1.left );
+		Sync<msgVote>(E1.left,	E2.right); Sync<msgVote>(E2.right, E3.left );
+		Sync<msgVote>(E3.right,	E1.left );
 		
 		Sync<msgLocal>(C1,query,  E1.query );
 		Sync<msgLocal>(C2,query,  E2.query );
