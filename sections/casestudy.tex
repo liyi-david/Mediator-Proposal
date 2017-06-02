@@ -3,7 +3,7 @@
 
 In modern distributed computing frameworks (e.g. MPI and ZooKeeper), \emph{leader election} plays an important role to organize multiple servers efficiently and consistently. This section shows how a classical leader election algorithm is modeled and easily used to coordinate other components in \lang{}.
 
- \cite{HagitDistributed2004} proposed an classical algorithm for a typical leader election scenario, as shown in Figure. \ref{fig:leaderelection}. Distributed processes are organized as a \emph{asynchronous unidirectional} ring where communication take place only between adjacent processes and following certain direction (from left to right in this case).
+  \cite{HagitDistributed2004} proposed an classical algorithm for a typical leader election scenario, as shown in Figure. \ref{fig:leaderelection}. Distributed processes are organized as a \emph{asynchronous unidirectional} ring where communication take place only between adjacent processes and following certain direction (from left to right in this case).
 
 \begin{figure}
 	\centering
@@ -49,7 +49,7 @@ automaton <id:int> election_module (
 
 The following code fragment encodes a parallel program containing 3 workers and their corresponding election\_modules. It is a simplified version of the one in Figure. \ref{fig:leaderelection}. In this example, \emph{worker}, the main calculating, is passed as a parameter since we expect that this system should be capable handling different working process.
 
-As we are modeling the leader election algorithm on a synchronous ring, only synchronous communications channel \emph{Sync}s are involved in this example. \emph{Sync} is a Reo channel in the first, but also modeled as an \emph{automaton} in our framework. It's implementation details can be found in \cite{medmodels}.
+As we are modeling the leader election algorithm on a synchronous ring, only synchronous communications channel \emph{Sync}s are involved in this example. \emph{Sync} is a Reo channel in the first, but also modeled as an \emph{automaton} in our framework. It's implementation details can be found in  \cite{medmodels}.
 % TODO:
 
 \begin{example}[A Complete Cluster System with 3 Instances]

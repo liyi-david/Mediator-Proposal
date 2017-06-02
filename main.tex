@@ -2,11 +2,12 @@
 
 % name of the language
 \newcommand{\lang}[0]{Mediator}
+\newcommand{\emlang}[0]{\emph{\lang{}}}
 
 \title{Component-Based Modeling in \lang{}}
 
 \author{Yi Li\and Meng Sun}
-\institute{LMAM and Department of Informatics, School of Mathematical Sciences, Peking University, Beijing, China \\
+\institute{LMAM and Department of Informatics, School of Mathematical Sciences, \\ Peking University, Beijing, China \\
 \email{liyi\_math@pku.edu.cn, sunmeng@math.pku.edu.cn}
 }
 
@@ -18,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-In this paper we propose a new language \lang{} to formalize component-based models. \lang{} provides a two-step modeling approach. \emph{Automata}, encapsulated with a interface of ports, is the basic behavior unit. \emph{Systems} make it able to declare automata as components or connectors, and then glue them together as a more complex model. With help of \lang{}, components and systems can be modeled separately, while the formal nature is still precisely guaranteed. Through some simple examples, we show that this new language can be used in various practical scenarios.
+In this paper we propose a new language \emph{\lang{}} to formalize component-based system models. \lang{} supports a two-step modeling approach. \emph{Automata}, encapsulated with an interface of ports, is the basic behavior unit. \emph{Systems} declare automata as components or connectors, and glue them together. With the help of \lang{}, components and systems can be modeled separately and precisely. Through various examples, we show that this language can be used in practical scenarios.
 \end{abstract}
 
 \input{sections/introduction}

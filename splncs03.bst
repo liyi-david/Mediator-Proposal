@@ -7,7 +7,7 @@
 %% file will not work for author-year style citations.
 %%
 %% Use \documentclass{llncs} and \bibliographystyle{splncs03}, and cite
-%% a reference with (e.g.) \cite{smith77} to get a "[1]" in the text.
+%% a reference with (e.g.)  \cite{smith77} to get a "[1]" in the text.
 %%
 %% This file comes to you courtesy of Maurizio "Titto" Patrignani of
 %% Dipartimento di Informatica e Automazione Universita' Roma Tre
@@ -61,9 +61,9 @@
  % It requires no extra package to interface to the main text.
  % The form of the \bibitem entries is
  %   \bibitem{key}...
- % Usage of \cite is as follows:
- %   \cite{key} ==>>          [#]
- %   \cite[chap. 2]{key} ==>> [#, chap. 2]
+ % Usage of  \cite is as follows:
+ %    \cite{key} ==>>          [#]
+ %    \cite[chap. 2]{key} ==>> [#, chap. 2]
  % where # is a number determined by the ordering in the reference list.
  % The order in the reference list is alphabetical by authors.
  %---------------------------------------------------------------------
@@ -877,7 +877,7 @@ FUNCTION {format.article.crossref}
     }
     { word.in swap$ * " " *}
   if$
-  " \cite{" * crossref * "}" *
+  "  \cite{" * crossref * "}" *
 }
 FUNCTION {format.crossref.editor}
 { editor #1 "{vv~}{ll}" format.name$
@@ -936,7 +936,7 @@ FUNCTION {format.book.crossref}
     }
     { format.crossref.editor * }
   if$
-  " \cite{" * crossref * "}" *
+  "  \cite{" * crossref * "}" *
 }
 FUNCTION {format.incoll.inproc.crossref}
 {
@@ -956,7 +956,7 @@ FUNCTION {format.incoll.inproc.crossref}
     }
     { word.in format.crossref.editor * " " *}
   if$
-  " \cite{" * crossref * "}" *
+  "  \cite{" * crossref * "}" *
 }
 FUNCTION {format.org.or.pub}
 { 't :=

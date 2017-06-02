@@ -24,7 +24,7 @@
 % Options
 \let\if@envcntreset\iffalse
 \DeclareOption{envcountreset}{\let\if@envcntreset\iftrue}
-\DeclareOption{citeauthoryear}{\let\citeauthoryear=Y}
+\DeclareOption{citeauthoryear}{\let \citeauthoryear=Y}
 \DeclareOption{oribibl}{\let\oribibl=Y}
 \let\if@custvec\iftrue
 \DeclareOption{orivec}{\let\if@custvec\iffalse}
@@ -661,7 +661,7 @@ to0pt{\kern0.55\wd0\vrule height0.45\ht0\hss}\box0}}}}
     }
 
 \ifx\oribibl\undefined
-\ifx\citeauthoryear\undefined
+\ifx \citeauthoryear\undefined
 \renewenvironment{thebibliography}[1]
      {\section*{\refname}
       \def\@biblabel##1{##1.}
