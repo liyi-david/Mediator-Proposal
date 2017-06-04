@@ -25,7 +25,7 @@
             \end{tikzpicture} \\
             \\
             \begin{tikzpicture}[remember picture]
-                \node [draw, rectangle, minimum width=3cm, minimum height=1cm] (component) at (0,0) {\texttt{main}};
+                \node [draw, rectangle, minimum width=3cm, minimum height=1cm] (component) at (0,0) {\texttt{worker}};
             \end{tikzpicture}
             \vspace{0.5em}
         \end{tabular}
@@ -34,4 +34,7 @@
     \draw[->, >=latex] (3,0.3) -- (connector) node[midway, above, xshift=-0.35cm] {\texttt{left}} ;
     \draw[->, >=latex] (connector) -- (9,0.3) node[midway, above, xshift=0.3cm] {\texttt{right}};
     \draw[<->, >=latex] (component) -- (connector) ;
+
+    \node[] at (0,-2.8) {(a)};
+    \node[] at (6,-2.8) {(b)};
 \end{tikzpicture}

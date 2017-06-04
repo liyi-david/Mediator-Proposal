@@ -1,88 +1,91 @@
 \section{Semantics}
 \label{sec:semantics}
 
-In the section, we introduce the formal semantics of \lang{} through the following steps. First we propose the concept \emph{configuration} to describe the state of an automaton. Next we show what the canonical form of the transitions and automata are, and how to canonicalize them. Finally, we define the formal semantics of automata as \emph{labelled transition systems}.
+In this section, we introduce the formal semantics of \lang{} through the following steps. First we use the concept \emph{configuration} to describe the state of an automaton. Next we show what the canonical forms of the transitions and automata are, and how to canonicalize them. Finally, we define the formal semantics of automata as \emph{labelled transition systems (LTS)}.
 
-We don't directly formalize a system as a labelled transition system. Instead, we propose an algorithm that flattens its hierarchical structure and generates a corresponding automaton.
+Instead of formalizing systems as LTS directly, we propose an algorithm that flattens the hierarchical structure of a system and generates a corresponding automaton.
 
-% TODO: a figure is required here
-
-\subsection{Configurations of Automata}
+\subsection{Configurations}
 \label{subsec:config}
-State of a \lang{} automaton depends on the values of its \emph{local variables} and \emph{adjoint variables}. First we introduce the definition of \emph{valuation} on a set of variables. 
+States of a \lang{} automaton depend on the values of its \emph{local variables} and \emph{adjoint variables}. First we introduce the definition of \emph{evaluation} on a set of variables. 
 
-\begin{definition}[Valuation]
-A valuation of a set of variables $V$ is defined as a function $v:V\rightarrow \mathbb{D}$ that satisfies $\forall x\in V,v(x)\in Dom(type(x))$. We denote the set of all possible valuations of $Vars$ by $Val(Vars)$.
+\begin{definition}[Evaluation]
+An evaluation of a set of variables $V$ is defined as a function $v:V\rightarrow \mathbb{D}$ that satisfies $\forall x\in V,v(x)\in Dom(type(x))$. We denote the set of all possible evaluations of $Vars$ by $EV(Vars)$.
 \end{definition}
 
-Basically, a valuation is a function that maps variables to one of its valid values, where we use $\mathbb{D}$ to denote the set of all values of all types. Now we can introduce \emph{configuration} that snapshots an automaton.
+Basically, an evaluation is a function that maps variables to one of its valid values, where we use $\mathbb{D}$ to denote the set of all values of all supported types. Now we can introduce \emph{configuration} that snapshots an automaton.
 
-\begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in Val(Vars)$ is a valuation on local variables, and $v_{adj}\in Val(Adj(P))$ is a valuation on adjoint variables. We use $Conf(A)$ to denote all the configurations of $A$.
+\begin{definition}[Configuration] A configuration of an automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is defined as a tuple $(v_{loc},v_{adj})$ where $v_{loc}\in EV(Vars)$ is an evaluation on local variables, and $v_{adj}\in EV(Adj(A))$ is an evaluation on adjoint variables. We use $Conf(A)$ to denote the set of all configurations of $A$.
 \end{definition}
 
 Now we can mathematically describe the language elements in an automaton:
 \begin{itemize}
     \item \emph{Guard}s of an automaton $A$ are represented by boolean functions on its configurations $g:Conf(A)\rightarrow Bool$.
-    \item \emph{Assignment Statement}s of $A$ are represented by functions that maps a configuration to the updated one $s_a:Conf(A)\rightarrow Conf(A)$.
+    \item \emph{Assignment Statement}s of $A$ are represented by functions that map configurations to their updated ones $s_a:Conf(A)\rightarrow Conf(A)$.
 \end{itemize}
 
 \subsection{Canonical Form of Transitions and Automata}
 \label{subsec:canonical}
 
-Different statement combinations may have the same behavior. For example, \texttt{a := b; c := d} and \texttt{a, c := b, d}. These irregular forms may lead to an extremely complicated and non-intuitive algorithm when joining multiple automata. 
-
+Different statement combinations may have the same behavior. For example, \texttt{a := b; c := d} and \texttt{a, c := b, d}. Such irregular forms may lead to an extremely complicated and non-intuitive process when joining multiple automata. 
 To simplify this process, we introduce the \emph{canonical} form of transitions and automata as follows.
 
 \begin{definition}[Canonical Transitions]
-A transition $t=g\rightarrow\{s_1,\cdots,s_n\}$ is canonical iff. its statements $\{s_i\}$ is a non-empty interleaving sequence of assignments and synchronizing statements which start from and end by assignments, e.g. \texttt{a := exp$_1$; sync A; b := exp$_2$; $\cdots$ \texttt{c := exp$_3$}}.
+A transition $t=g\rightarrow[s_1,\cdots,s_n]$ is canonical iff. its statements is a non-empty interleaving sequence of assignments and synchronizing statements which starts from and ends by assignments.
 \end{definition}
 
-Suppose $g\rightarrow\{s_1,\cdots,s_n\}$ is a transition of automaton $A$, it can be canonicalized through the following steps.
+Suppose $g\rightarrow[s_1,\cdots,s_n]$ is a transition of automaton $A$, it can be canonicalized through the following steps.
 \begin{description}
-    \item[S1] If we find a continuous subsequence $s_i,\cdots,s_j$ (where $s_k$ is an assignment statement for all $k= i,i+1,\cdots,j$, and $j>i$), we merge them as a single one. Since the assignment statements are formalized as functions $Conf(A)\rightarrow Conf(A)$, the subsequence $s_i,\cdots, s_j$ can be replaced by $s'=s_i\circ\cdots \circ s_j$.
-    \item[S2] Keep going with \emph{S1} until there is no further subsequence to merge.
-    \item[S3] Use identical assignments $id_{Conf(A)}$ to fill the gap between any adjacent synchronizing statements. Similarly, if the statements' list start from or end up with a synchronizing statement, we should also use $id_{Conf(A)}$ to decorate its head and tail.
+    \item[S1] If we find a continuous subsequence $s_i,\cdots,s_j$ (where $s_k$ is an assignment statement for all $k= i,i+1,\cdots,j$, and $j>i$), we merge them as a single one. Since the assignment statements are formalized as functions $Conf(A)\rightarrow Conf(A)$, the subsequence $s_i,\cdots, s_j$ can be replaced by $s'=s_j\circ\cdots \circ s_i$\footnote{The symbol $\circ$ denotes the composition operator on functions.}.
+    \item[S2] Keep on going with \emph{S1} until there is no further subsequence to merge.
+    \item[S3] Use identical assignments $id_{Conf(A)}$ to fill the gap between any adjacent synchronizing statements. Similarly, if the statements' list starts from or ends up with a synchronizing statement, we should also use $id_{Conf(A)}$ to decorate its head or tail.
 \end{description}
 
 It's clear that once we found such a continuous subsequence, the merging operation will reduce the number of statements. Otherwise it stops. It's clear that $S$ is a finite set, and the algorithm always terminates within certain time.
 
 \begin{definition}[Canonical Automata]
-    An automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$ is canonical iff. a) $Trans_G$ includes only one transition group and b) all transitions in this group are also canonical.
+    $A=\langle Ports,$ $Vars,Trans_G\rangle$ is a cano-nical automaton iff. a) $Trans_G$ includes only one transition group and b) all transitions in this group are canonical.
 \end{definition}
 
-Now we show how $Trans_G$ is reformed to make an automaton canonical.
-Suppose $Trans_G$ is composed of a set of transition groups $t_{G_i}$, where the length of $t_{G_i}$ is denoted by $l_i$,
+Now we show for an arbitrary automaton $A=\langle Ports,$ $Vars,Trans_G\rangle$, how $Trans_G$ is reformed to make $A$ canonical.
+Suppose $Trans_G$ is a sequence of transition groups $t_{G_i}$, where the length of $t_{G_i}$ is denoted by $l_i$,
 \[
-    \{t_{G_1}=\{g_{11}\rightarrow S_{11},\cdots, g_{1l_1}\rightarrow S_{1l_1}\},\cdots,t_{G_n}=\{g_{n1}\rightarrow S_{n1},\cdots,g_{nl_n}\rightarrow S_{nl_n}\}\}
+    [t_{G_1}=\{g_{11}\rightarrow S_{11},\cdots, g_{1l_1}\rightarrow S_{1l_1}\},\cdots,t_{G_n}=\{g_{n1}\rightarrow S_{n1},\cdots,g_{nl_n}\rightarrow S_{nl_n}\}]
 \]
 
-Informally speaking, once a transition in $t_{G_1}$ is activated, all the other transitions in $t_{G_i}(i>1)$ should be strictly prohibited from being fired. We use $activated(t_G)$ to denote the condition where at least one transition in $t_G$ is enabled, formalized as
+Informally speaking, once a transition in $t_{G_i}$ is activated, all the other transitions in $t_{G_j}(j>i)$ should be strictly prohibited from being fired. We use $activated(t_G)$ to denote the condition where at least one transition in $t_G$ is enabled, formalized as
 \[
     activated(t_G=\{g_1\rightarrow S_1,\cdots, g_n\rightarrow S_n\}) = g_1\lor\cdots\lor g_n
 \]
 
-Then we can generate the new group of transitions with no dependency on priority as followings. To simplify the equations, we use $activated(t_{G_1},\cdots,t_{G_{n-1}})$ to indicate that at least one group in $t_{G_1},\cdots,t_{G_{n-1}}$ is activated. It's equivalent form is $activated(t_{G_1})\lor\cdots\lor activated(t_{G_{n-1}})$.
+To simplify the equations, we use $activated(t_{G_1},\cdots,t_{G_{n-1}})$ to indicate that at least one group in $t_{G_1},\cdots,t_{G_{n-1}}$ is activated. It's equivalent form is:
+\[
+    activated(t_{G_1})\lor\cdots\lor activated(t_{G_{n-1}})
+\]
+Then we can generate the new group of transitions with no dependency on priority as followings.
 \begin{eqnarray*}
-    Trans_G' & = \{ & g_{11}\rightarrow S_{11}, \cdots ,g_{1l_1}\rightarrow S_{1l_1}, \\
+    Trans_G' & = [ & g_{11}\rightarrow S_{11}, \cdots ,g_{1l_1}\rightarrow S_{1l_1}, \\
     & & g_{21}\land \lnot activated(t_{G_1})\rightarrow S_{21}, \cdots, g_{2l_2} \land \lnot activated(t_{G_1})\rightarrow S_{2l_2}, \cdots \\
     & & g_{n1}\land \lnot activated(t_{G_1},\cdots,t_{G_{n-1}})\rightarrow S_{n1}, \cdots, \\
-    & & g_{nl_n} \land \lnot activated(t_{G_1},\cdots, t_{G_{n-1}})\rightarrow S_{nl_n}\}
+    & & g_{nl_n} \land \lnot activated(t_{G_1},\cdots, t_{G_{n-1}})\rightarrow S_{nl_n}]
 \end{eqnarray*}
 
 
 \subsection{From System to Automaton}
 \label{subsec:composition}
 
-System in \lang{} provides an approach to construct hierarchical models from automata (declared as \emph{components} and \emph{connectors}). In this section, we present the algorithms that flatten the hierarchical system into a typical automaton.
+\lang{} provides an approach to construct hierarchical system models from automata. In this section, we present an algorithm that flattens such a hierarchical system into a typical automaton.
 
-For a system $S=\langle Ports, Entities, Internals, Links\rangle$, Algorithm. \ref{alg:compose} shows it is flattened into an automaton, where we assume that all the entities are canonical automata (we will recursively flatten the entities first if they are also systems).
+For a system $S=\langle Ports, Entities, Internals, Links\rangle$, Algorithm \ref{alg:compose} flattens it into an automaton, where we assume that all the entities are canonical automata (all the entities are flattened recursively first if they are systems).
 
 During the initialization step we refactor all the variables in its entities to avoid name conflicts, and establish the \emph{link}s by replacing occurrence of one port (or internal node) with its corresponding one with reference to \emph{Link}.
-After preparation of entities, we put all the transitions together, both \emph{internal} ones and \emph{external} ones.
+After preparation of entities, we start with merging the transitions, both \emph{internal} ones and \emph{external} ones.
 
 Internal transitions are easy to handle. Since they do not synchronize with other transitions, we directly put all the internal transitions in all entities into the flattened automaton, also as internal transitions.
 
-External transitions, on the other hand, have to synchronize with its corresponding external transitions in other entities. For example, when an automaton want to read some thing from a input port $P_1$, there must be another one is writing something to its output port $P_2$ where $P_1$ and $P_2$ are welded in the system.
+External transitions, on the other hand, have to synchronize with its corresponding external transitions in other entities. For example, when an automaton reads from an input port $P_1$, there must be another automaton which is writing to its output port $P_2$, where $P_1$ and $P_2$ are welded in the system.
+
+In the following we use $\mathcal{P}(A)$ to denote the power set of $A$.
 
 \begin{algorithm}[H]
     \caption{\texttt{Flatten} a System into an Automaton}
@@ -107,7 +110,7 @@ External transitions, on the other hand, have to synchronize with its correspond
             \STATE $A.Trans_G \leftarrow A.Trans_G + Internal(A_i.Trans_G)$
             \STATE $ext\_trans \leftarrow ext\_trans + External(A_i.Trans_G)$
         \ENDFOR
-        \FOR{$set\_trans\in P(ext\_trans)$}
+        \FOR{$set\_trans\in \mathcal{P}(ext\_trans)$}
             \STATE $new\_edge\leftarrow \mbox{\texttt{Schedule}}(S, set\_trans)$ 
             \IF{\emph{new\_edge $\neq$ null}}
                 \STATE $A.Trans_G = A.Trans_G + \{new\_edge\}$
@@ -116,85 +119,84 @@ External transitions, on the other hand, have to synchronize with its correspond
     \end{algorithmic}
 \end{algorithm}
 
-In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} and \texttt{value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to shared variables are performed before the shared variables are referenced. Basically, this is a topological sorting problem. A detailed algorithm is described in Algorithm \ref{alg:synchronize}.
+In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} and \texttt{value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to adjoint variables are performed before the adjoint variables are referenced. Basically, this is a topological sorting problem on dependency graphs. A detailed algorithm is described in Algorithm \ref{alg:synchronize}. In this algorithm, we use $\bot$ and $\top$ to denote starting and ending of a transition's execution, and $reset\_stmt(p)$ to denote the corresponding statement that resets a port's status \texttt{p.reqRead, p.reqWrite := false, false}.
 
 \begin{algorithm}[t]
     \caption{\texttt{Schedule} a Set of External Transitions}
     \label{alg:synchronize}
+    \algsetup{linenosize=\small}
+    \small
     \begin{algorithmic}[1]
         \REQUIRE A System $S$, a set of external canonical transitions $t_1,t_2,\cdots,t_n$
         \ENSURE A synchronized transition $t$
-        \IF{$\{t_i\}$ don't belong to different automata or $\exists t_i$ is internal}
-            \STATE $t\leftarrow null$
-            \RETURN
+        \IF{$\exists i,j\in \{1,\cdots, n\}$ s.t. $t_i$ and $t_j$ belong to the same automaton}
+            \STATE \textbf{return} $t\leftarrow null$
         \ENDIF
-        \STATE \emph{t.g, t.S} $\leftarrow \bigwedge_i t_i.g,\:\{\}$
-        \STATE 
-        \STATE  \emph{G} $\leftarrow$ a Graph $\langle V,E\rangle$
-                \COMMENT{create a dependency graph}
+
+        \STATE \emph{t.g, t.S, G} $\leftarrow \bigwedge_i t_i.g,\:[\:]$, an empty graph $\langle V,E\rangle$
         \FOR{$i\leftarrow 1,\cdots,n$}
             \STATE add $\bot_i, \top_i$ to \emph{G.V}
-            \STATE \emph{lasts} $\leftarrow\{\bot_i\}$
-            \FOR {$j\leftarrow 1, 3, \cdots, len(t_i.S) - 1$}
-                \STATE \emph{ports} $\leftarrow$ all the synchronized ports in $t_i.S_{j+1}$
-                \FOR {$l\in lasts, p\in ports$}
-                    \IF {$p\not\in G.V$}
-                        \STATE add $p$ to $G.V$
+            \STATE \emph{syncs}, \emph{ext\_syncs} $\leftarrow\{\bot_i\},\{\}$
+            \FOR {$j\leftarrow 1, 3, \cdots, len(t_i.S)$}
+                \STATE add $t_i.S_{j}$ to $G.V$
+                \STATE \textbf{if} $ext\_syncs\neq\{\}$ \textbf{then} add `\texttt{sync} $ext\_syncs\mbox{'}\rightarrow t_i.S_j$ to G.E 
+                \FOR {$p\in syncs$}
+                    \STATE add edge $reset\_stmt(p)\rightarrow t_i.S_j$ to $G.E$
+                \ENDFOR
+                \STATE $syncs\leftarrow$ \{ all the synchronized ports in $t_i.S_{j+1}$ \} $\backslash S.Ports$ \STATE $ext\_syncs\leftarrow$ \{ all the synchronized ports in $t_i.S_{j+1}$ $\}\cap S.Ports$
+                \IF {$j < len(t_i.S)$}
+                    \FOR {$p\in $ $syncs$}
+                        \STATE add $reset\_stmt(p)$ to $G.V$ if is is not included yet
+                        \STATE add edge $t_i.S_j \rightarrow reset\_stmt(p)$ to \emph{G.E}
+                    \ENDFOR
+                    \IF {$ext\_syncs\neq \{\}$}
+                        \STATE add `\texttt{sync} $ext\_syncs$' to $G.V$
+                        \STATE add edge $t_i.S_j\rightarrow$ `\texttt{sync} $ext\_syncs$' to $G.E$
                     \ENDIF
-                    \STATE add edge $l \xrightarrow{t_i.S_j} p$ to \emph{G.E}
-                \ENDFOR 
+                \ELSE
+                    \STATE add edge $t_i.S_j\rightarrow \top_i$ to $G.E$
+                \ENDIF
             \ENDFOR
-            \FOR {$l\in lasts$}
-                \STATE add edge $l \xrightarrow{t_i.S_{len(t_i.S)}} \top_i$ to \emph{G.E}
-            \ENDFOR 
         \ENDFOR
-        \STATE
-        \IF{($G$ comprises a ring) \emph{or} ($\exists v\in G.v\backslash S.Ports$ is a port whose \emph{degree} $\neq 4$)}
-            \STATE $t\leftarrow null$
-        \ELSE
-            \STATE $t.S\leftarrow\{$ select all the statements in $G.E$ using topological sort $\}$
-            \STATE $\forall P\in G.v\backslash S.Ports$ replace \texttt{sync P} in $t.S$ with \\ \hspace{1em} \texttt{P.reqRead, P.reqWrite := false, false}
-        \ENDIF
+        \STATE \textbf{if} $G$ comprises a ring \textbf{then} $t\leftarrow null$
+        \STATE \textbf{else} $t.S\leftarrow[$ select all the statements in $G.E$ using topological sort $]$
     \end{algorithmic}
 \end{algorithm}
 
-Algorithm. \ref{alg:synchronize} may not always produce a valid synchronized transition. Line 25 shows several situations where the synchronization process fails:
-\begin{enumerate}
-    \item The dependency graph includes a \emph{ring}, which is a sign of \emph{circular dependencies}. For example, transition \texttt{g$_1$ -> \{sync A;sync B;\}} and transition \texttt{g$_2$ -> \{sync B;sync A;\}} cannot be synchronized where both ports require to be triggered first.
-    \item The dependency graph includes a non-trivial vertex (neither $\bot$ nor $\top$) whose degree is not equal to $4$. In other words, a port is not properly synchronized or synchronized with more than two transitions (as mentioned in Section. \ref{subsec:system}, any communication happens only between two automata).
-\end{enumerate}
+Algorithm \ref{alg:synchronize} may not always produce a valid synchronized transition. When the dependency graph has a \emph{ring}, the algorithm fails due to \emph{circular dependencies}. For example, transition \texttt{g$_1$->\{sync A;sync B;\}} and transition \texttt{g$_2$->\{sync B;sync A;\}} cannot be synchronized where both $A,B$ need to be triggered first.
 
-Topological sorting, as we all knows, may generate different schedules for the same dependency graph. The following theorem shows that all these schedules are equivalent as transition statements.
+Topological sorting, as we all know, may generate different schedules for the same dependency graph. The following theorem shows that all these schedules are equivalent as transition statements.
 
-\begin{theorem}[Equivalence between Schedules] If two set of assignment statements $S_1, S_2$ are generated from the same set of external transitions, they have exactly the same behavior (i.e. $S_1$ and $S_2$ will lead to the same result when executed under the same configuration).
+\begin{theorem}[Equivalence between Schedules] If two sequences of assignment statements $S_1, S_2$ are generated from the same set of external transitions, they have exactly the same behavior (i.e. $S_1$ and $S_2$ will lead to the same result when they are executed under the same configuration).
 \end{theorem}
 
 \subsection{Automaton as Labelled Transition System}
+\label{subsec:lts}
 
 With all the language elements properly formalized, now we introduce the formal semantics of \emph{automata} based on \emph{labelled transition system}.
 
-\begin{definition}[Labelled Transition System, LTS]
-    A labelled transition system is a tuple $(S,\Sigma,\rightarrow,s_0)$ where $S$ is a set of states with initial state $s_0\in S$, $\Sigma$ is a set of actions, and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity reasons, we use $s\xrightarrow{a} s'$ to denote $(s,a,s')\in\rightarrow$.
+\begin{definition}[Labelled Transition System]
+    A labelled transition system is a tuple $(S,\Sigma,\rightarrow,s_0)$ where $S$ is a set of states with initial state $s_0\in S$, $\Sigma$ is a set of actions, and $\rightarrow\subseteq S\times\Sigma\times S$ is a set of transitions. For simplicity, we use $s\xrightarrow{a} s'$ to denote $(s,a,s')\in\rightarrow$.
 \end{definition}
 
 Suppose $A=\langle Ports, Vars, Trans_G\rangle$ is an automaton, its semantics can be captured by a LTS $\langle S_A, \Sigma_A,\rightarrow_A,s_0\rangle$ where
 \begin{itemize}
     \item $S_A=Conf(A)$ is the set of all configurations of $A$.
     \item $s_0\in S_A$ is the initial configuration where all variables (except for \texttt{reqRead}s and \texttt{reqWrite}s) are initialized with their default value, and all \texttt{reqRead}s and \texttt{reqWrite}s are initialized as \texttt{false}.
-    \item $\Sigma_A=\{i\}\cup P(Ports)$ is the set of all actions.
-    \item $\rightarrow_A\subseteq S_A\times \Sigma_A\times S_A$ is a set of transitions constructed by the following rules.
+    \item $\Sigma_A=\{i\}\cup \mathcal{P}(Ports)$ is the set of all actions.
+    \item $\rightarrow_A\subseteq S_A\times \Sigma_A\times S_A$ is a set of transitions obtained by the following rules.
 \end{itemize}
 
 \begin{mathpar}
-    \inferrule* [right=R-InputStatus] {p\in P_{in}}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.reqWrite\mapsto \lnot p.reqWrite])} \\
-    \inferrule* [right=R-InputValue] {p\in P_{in}, val\in Dom(Type(p.value))}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.value\mapsto val])} \\
-    \inferrule* [right=R-OutputStatus] {p\in P_{out}}{(v_{loc}, v_{adj})\xrightarrow{}_A(v_{loc},v_{adj}[p.reqRead\mapsto \lnot p.reqRead])} \\
+    \inferrule* [right=R-InputStatus] {p\in P_{in}}{(v_{loc}, v_{adj})\xrightarrow{i}_A(v_{loc},v_{adj}[p.reqWrite\mapsto \lnot p.reqWrite])} \\
+    \inferrule* [right=R-InputValue] {p\in P_{in}, val\in Dom(Type(p.value))}{(v_{loc}, v_{adj})\xrightarrow{i}_A(v_{loc},v_{adj}[p.value\mapsto val])} \\
+    \inferrule* [right=R-OutputStatus] {p\in P_{out}}{(v_{loc}, v_{adj})\xrightarrow{i}_A(v_{loc},v_{adj}[p.reqRead\mapsto \lnot p.reqRead])} \\
     \inferrule* [right=R-Internal] {\{g\rightarrow \{s\}\}\in Trans_G\mbox{ is internal}}{(v_{loc}, v_{adj})\xrightarrow{i}_A s(v_{loc},v_{adj})} \\
-    \inferrule* [right=R-External] {\{g\rightarrow S\}\in Trans_G\mbox{ is external, } \{s_1,\cdots,s_n\}\mbox{ are the assignments in $S$} \\\vspace{0.2em} \{p_1,\cdots,p_m\}\mbox{ are the synchronized ports}}{(v_{loc}, v_{adj})\xrightarrow{\{p_1,\cdots,p_m\}}_A s_n\circ\cdots\circ s_1(v_{loc},v_{adj})} \\
+    \inferrule* [right=R-External] {g\rightarrow S\in Trans_G\mbox{ is external, } [s_1,\cdots,s_n]\mbox{ are assignments in $S$} \\ \vspace{1.5em} p_1,\cdots,p_m \mbox{ are the synchronized ports}}{(v_{loc}, v_{adj})\xrightarrow{\{p_1,\cdots,p_m\}}_A s_n\circ\cdots\circ s_1(v_{loc},v_{adj})} \\
 \end{mathpar}
 
-The first three rules describe the potential change of environment, i.e. the adjoint variables. R-InputStatus and R-OutputStatus shows that the reading status of an output port and status of an input port may changed by the environment randomly. And R-InputValue shows that the value of an input port may also be updated.
+The first three rules describe the potential change of environment, i.e. the adjoint variables. R-InputStatus and R-OutputStatus show that the reading status of an output port and writing status of an input port may be changed by the environment randomly. And R-InputValue shows that the value of an input port may also be updated by the environment.
 
-The rule R-Internal models the internal transitions in $Trans_G$. As illustrated previously, an internal transition doesn't contains any synchronizing statement. So its canonical form comprises only one assignment $s$. Firing such a transition will simply apply $s$ to the current configuration.
+The rule R-Internal specifies the internal transitions in $Trans_G$. As illustrated previously, an internal transition contains no synchronizing statement. So its canonical form comprises only one assignment $s$. Firing such a transition will simply apply $s$ to the current configuration.
 
-Meanwhile, the rule R-External models the external transitions, where the automaton interact with its environment. Fortunately, since all the environment changes are captured by the first three rules, we can simply regard the environment as another set of local variables. Consequently, the only difference between an internal transition and an external transitions is that the later may contains multiple assignments.
+Meanwhile, the rule R-External specifies the external transitions, where the automaton interact with its environment. Fortunately, since all the environment changes are captured by the first three rules, we can simply regard the environment as another set of local variables. Consequently, the only difference between an internal transition and an external transition is that the later one may contain multiple assignments.

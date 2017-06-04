@@ -19,7 +19,7 @@
 \maketitle
 
 \begin{abstract}
-In this paper we propose a new language \emph{\lang{}} to formalize component-based system models. \lang{} supports a two-step modeling approach. \emph{Automata}, encapsulated with an interface of ports, is the basic behavior unit. \emph{Systems} declare automata as components or connectors, and glue them together. With the help of \lang{}, components and systems can be modeled separately and precisely. Through various examples, we show that this language can be used in practical scenarios.
+In this paper we propose a new language \emph{\lang{}} to formalize component-based system models. \lang{} supports a two-step modeling approach. \emph{Automata}, encapsulated with an interface of ports, are the basic behavior units. \emph{Systems} declare components or connectors through automata, and glue them together. With the help of \lang{}, components and systems can be modeled separately and precisely. Through various examples, we show that this language can be used in practical scenarios.
 \end{abstract}
 
 \input{sections/introduction}
@@ -31,13 +31,13 @@ In this paper we propose a new language \emph{\lang{}} to formalize component-ba
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-A new modeling language \lang{} is proposed in this paper to help with component-based software engineering through a formal way. With the basic semantics unit \emph{automata} that capture the formal nature of a component, and \emph{systems} for hierarchical composition, the language is easy-to-use for both formal method researchers and system designers.
+A new modeling language \lang{} is proposed in this paper to help with component-based software engineering through a formal way. With the basic behavior unit \emph{automata} that captures the formal nature of components and connections, and \emph{systems} for hierarchical composition, the language is easy-to-use for both formal method researchers and system designers.
 
-This paper is a preface of a set of under-development tools. We plan to build a model checking algorithm for a finite subset of \lang{}, and then extend it through symbolic approach. A automatic code-generator is also being built to generate platform-specific codes like \emph{Arduino}.
+This paper is a preface of a set of under-development tools. We plan to build a model checker for \lang{}, and extend it through symbolic approach. An automatic code-generator is also being built to generate platform-specific codes like \emph{Arduino}\cite{margolis2011arduino}.
 
 \section*{Acknowledgements}
 
-The work was partially supported by the National Natural Science Foundation of China under grant no. TBD.
+The work was partially supported by the National Natural Science Foundation of China under grant no. 61532019, 61202069 and 61272160.
 
 \bibliographystyle{splncs03}
 \bibliography{fm,local}

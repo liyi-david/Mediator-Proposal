@@ -1,29 +1,40 @@
 \section*{Appendix}
 
 \setcounter{theorem}{0}
-\begin{theorem}[Equivalence between Schedules] If two set of assignment statements $S_1, S_2$ are generated from the same set of external transitions, they have exactly the same behavior (i.e. execution of $S_1$ and $S_2$ under the same configuration will lead to the same result.
+\begin{theorem}[Equivalence between Schedules] If two sequences of assignment statements $S_1, S_2$ are generated from the same set of external transitions, they have exactly the same behavior (i.e. $S_1$ and $S_2$ will lead to the same result when they are executed under the same configuration).
 \end{theorem}
 \begin{proof}
-    Apparently, when executing statements, all the changes on configurations come from \emph{assignments}. Once we successfully prove that for each assignment, its pre-configuration and post-configuration in $S_1$ and $S_2$ are exactly the same, we are able to finish this proof.
+    First we assume that $S_1=\{s_1,\cdots,s_n\}$ and $S_2=\{s'_1,\cdots,s'_n\}$ belong to an automaton $A$.
+    Considering the LTS-based formal semantics provided in Section \ref{subsec:lts}, changes on configurations only come from \emph{assignments}. 
     
-    In the following proof, we denote $S_1$ and $S_2$ by $S_1=\{s_1,\cdots,s_n\},S_2=\{s'_1,\cdots,s'_n\}$, and the automaton that a transition belongs to by $Automaton(s)$. We try to use an inductive approach to prove the hypothesis that \emph{for each assignment $s\in S_1$ and its corresponding assignment $s'\in S_2$, the shared variables it changes have the same evaluation in their post-configurations.}
+    \liyi{We formally describe the execution of these assignment statements through \emph{pre-configuration}s and \emph{post-configuration}s. Pre-configurations indicate the configuration of $A$ before executing a certain statement. Similarly, post-configurations indicate the configuration of $A$ after executing a certain statement. In this proof, we assume that the pre-conditions of $s_1$ and $s_1'$ are exactly the same.
+    }
+    
+    We try to use an inductive approach to prove the \liyi{following} hypothesis: \emph{for each assignment $s\in S_1$ and its corresponding assignment $s'\in S_2$, the adjoint variables it changes have the same evaluation in their post-configurations.}
     \begin{enumerate}
-        \item Let's come to the \emph{FIRST} assignment state $s$ in $S_1$ where shared variables is assigned. We assume that its corresponding statement in $S_2$ is $s'$. Comparing $s$ and $s'$, we have:
+        \item Consider the \emph{first} assignment $s$ in $S_1$ \liyi{where there are assigned adjoint variables. It is assumed that} its corresponding statement in $S_2$ is $s'$. Comparing $s$ and $s'$, we have:
         \begin{enumerate}
-            \item $s'$ is also the first assignment in $S_2$ which modifies \emph{this set} of assigned variables.
-            \emph{(A shared variable can be assigned in one of its owner, thus all assignments that modifies this variable belong to the same transition, and their order is strictly maintained.)}
-            \item $s$ and $s'$ include no reference to other shared variables. \emph{(A shared variable can be referenced only when it has been assigned before, however $s$ is the first assignment which modifies a shared variable.)}
-            \item In the pre-configuration of $s$ and $s'$, all the local variables of $Automaton(s)$ have the same evaluation. \emph{(Derived from the same reason in (a))}.
+            \item $s'$ is also the first assignment in $S_2$ which modifies \liyi{adjoint variables that are also modified by $s$}.
+            \emph{(An adjoint variable can be assigned in \liyi{only one automaton}, thus all assignments that modifies these variables belong to the same transition, and their order is strictly maintained \liyi{thanks to topological sorting}.)}
+            \item $s$ and $s'$ include no reference to other adjoint variables. \emph{(\liyi{According to Algorithm \ref{alg:synchronize}}, an adjoint variable can be referenced only when it has been assigned before. \liyi{As previously assumed, $s$ is the first assignment which modifies an adjoint variable, so $s$ cannot refer any other adjoint variables since all of them have not been assigned yet.})}
+            \item In the pre-configuration of $s$ and $s'$, all the local variables of $A$ have the same evaluation. \emph{(Derived from the same reason in (a), \liyi{together with the hypothesis that $s$ and $s'$ shares the same pre-configuration)}}.
         \end{enumerate}
-        Consequently, in the post-configuration of $s$ and $s'$, all the shared variables have the \emph{SAME} evaluation.
+        Consequently, in the post-configuration of $s$ and $s'$, all the adjoint variables have the \emph{same} evaluation.
 
-        \item Assume that all assignments (to shared variables) in $s_1,\cdots,s_i$ have been proved to satisfy the hypothesis, now we are going to prove that $s$, the first transition where shared variables are referenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy the hypothesis.
+        \item Assume that all assignments (to adjoint variables) in $s_1,\cdots,s_i$ have been proved to satisfy the hypothesis, now we are going to prove that $s$, the first transition where adjoint variables are referenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy the hypothesis.
 
         \begin{enumerate}
-            \item In the pre-configuration of $s$ and $s'$, all the shared variables that are referenced in $s$ and $s'$ have the \emph{SAME} evaluation. \emph{(Thanks to the assumption, all assignments to shared variables in $s_1,\cdots,s_i$ share the same evaluation (on referenced variables only) with their corresponding assignments in $s'$. And on the other hand, for any assignments to the referenced shared variables in $S_2$, its index in $S_1$ must be less than $s$, and in turn satisfy the hypothesis due to the assumption.)}
-            \item In the pre-configuration of $s$ and $s'$, all the local variables of $Automaton(s)$ have the \emph{SAME} evaluation. \emph{(Derived by the same reason as in 1.(c))}
+            \item In the pre-configuration of $s$ and $s'$, all the adjoint variables that are referenced in $s$ and $s'$ have the \emph{same} evaluation. \emph{(Thanks to the assumption, all assignments to adjoint variables in $s_1,\cdots,s_i$ share the same evaluation (on referenced variables only) with their corresponding assignments in $s'$. And on the other hand, for any assignments to the referenced adjoint variables in $S_2$, its index in $S_1$ must be less than $s$, and in turn satisfy the hypothesis due to the assumption.)}
+            \item In the pre-configuration of $s$ and $s'$, all the local variables of $A$ have the \emph{same} evaluation. \emph{(Derived by the same reason as in 1.(c))}
         \end{enumerate}
 
-        It's apparent that in the post-configuration of $s$ and $s'$, all the \emph{assigned} shared variables have the \emph{SAME} evaluation.
+        It's apparent that in the post-configuration of $s$ and $s'$, all the \emph{assigned} adjoint variables have the \emph{same} evaluation.
     \end{enumerate}
+    \liyi{
+    With the help of the hypothesis, it's easy to prove the original theorem:
+    \begin{enumerate}
+        \item For each adjoint variable $v$ and the last statement in $s\in S_1$ where $v$ is assigned, it's obvious that the corresponding statement $s'\in S_2$ is also the last statement that modifies $v$. And according to the hypothesis, the value of $v$ after execution of $s$ and $s'$ are exactly the same. Consequently, the final value of $v$ after execution of $S_1$ and $S_2$ are also exactly the same.
+        \item For each local variable $v$ and the last statement $s\in S_1$ where $v$ is assigned, it is easy to prove that in the pre-configurations of $s$ and its corresponding statement $s'\in S_2$, all the local variables and referenced adjoint variables have the same value. \emph{(When an adjoint variable is referenced, the last assignment on this variable has been executed already. And due to the hypothesis, these variables also have the same value in their pre-conditions.)}
+    \end{enumerate}
+    }
 \end{proof}
