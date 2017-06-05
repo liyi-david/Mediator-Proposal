@@ -78,7 +78,7 @@ Then we can generate the new group of transitions with no dependency on priority
 
 For a system $S=\langle Ports, Entities, Internals, Links\rangle$, Algorithm \ref{alg:compose} flattens it into an automaton, where we assume that all the entities are canonical automata (all the entities are flattened recursively first if they are systems).
 
-During the initialization step we refactor all the variables in its entities to avoid name conflicts, and establish the \emph{link}s by replacing occurrence of one port (or internal node) with its corresponding one with reference to \emph{Link}.
+During the initialization step we refactor all the variables in its entities to avoid name conflicts, and establish the \emph{link}s by replacing occurrence of one port (or internal node) with its corresponding one with reference to \emph{Link}. \liyi{In this step, we refactor all \emph{adjoint variable}s entities as \emph{local variables} in Line 16. And these ports are hided from external access.}
 After preparation of entities, we start with merging the transitions, both \emph{internal} ones and \emph{external} ones.
 
 Internal transitions are easy to handle. Since they do not synchronize with other transitions, we directly put all the internal transitions in all entities into the flattened automaton, also as internal transitions.
@@ -90,6 +90,8 @@ In the following we use $\mathcal{P}(A)$ to denote the power set of $A$.
 \begin{algorithm}[H]
     \caption{\texttt{Flatten} a System into an Automaton}
     \label{alg:compose}
+    \algsetup{linenosize=\small}
+    \small
     \begin{algorithmic}[1]
         \REQUIRE A system $S=\langle Ports, Entities, Internals, Links\rangle$
         \ENSURE An automaton $A$
@@ -106,20 +108,27 @@ In the following we use $\mathcal{P}(A)$ to denote the power set of $A$.
         \ENDFOR
         \STATE $ext\_trans\leftarrow \{\}$
         \FOR{$i\leftarrow 1,2,\cdots,n$}
-            \STATE $A.Vars\leftarrow A.Vars + A_i.Vars$
-            \STATE $A.Trans_G \leftarrow A.Trans_G + Internal(A_i.Trans_G)$
-            \STATE $ext\_trans \leftarrow ext\_trans + External(A_i.Trans_G)$
+            \STATE add $A_i.Vars$ to $A.Vars$
+            \liyi{
+            \FOR{$internal\in A_i.Ports$}
+                \STATE add $\{ internal\texttt{.reqRead}, internal\texttt{.reqWrite}, internal\texttt{.value}\}$ to $A.Vars$
+            \ENDFOR
+            \STATE add \emph{all internal transitions} in $A_i.Trans_G$ to $A.Trans_G$
+            \STATE add \emph{all external transitions} in $A_i.Trans_G$ to $ext\_trans$
+            }
         \ENDFOR
         \FOR{$set\_trans\in \mathcal{P}(ext\_trans)$}
-            \STATE $new\_edge\leftarrow \mbox{\texttt{Schedule}}(S, set\_trans)$ 
-            \IF{\emph{new\_edge $\neq$ null}}
-                \STATE $A.Trans_G = A.Trans_G + \{new\_edge\}$
-            \ENDIF
+            \STATE add $\mbox{\texttt{Schedule}}(S, set\_trans)$ to $A.Trans_G$ \textbf{if} it is not \emph{null}
         \ENDFOR
     \end{algorithmic}
 \end{algorithm}
 
-In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} and \texttt{value}) are shared between automata. During synchronization, the most important principle is to make sure assignments to adjoint variables are performed before the adjoint variables are referenced. Basically, this is a topological sorting problem on dependency graphs. A detailed algorithm is described in Algorithm \ref{alg:synchronize}. In this algorithm, we use $\bot$ and $\top$ to denote starting and ending of a transition's execution, and $reset\_stmt(p)$ to denote the corresponding statement that resets a port's status \texttt{p.reqRead, p.reqWrite := false, false}.
+In \lang{} \emph{systems}, only adjoint variables are shared between automata. During synchronization, the most important principle is to make sure assignments to adjoint variables are performed before the adjoint variables are referenced. Basically, this is a topological sorting problem on dependency graphs. A detailed algorithm is described in Algorithm \ref{alg:synchronize}. In this algorithm, \liyi{we use
+\begin{itemize}
+    \item $\bot$ and $\top$ to denote starting and ending of a transition's execution, \item $synchronizable$($t_1,\cdots,t_n$) to denote that the transitions are synchronizable, i.e. they come from different automaton and for each port being synchronized, there are exactly 2 transitions in $t_1,\cdots,t_n$ that synchronize it, and
+    \item $reset\_stmt(p)$ to denote the corresponding statement that resets a port's status \texttt{p.reqRead, p.reqWrite := false, false}.
+\end{itemize}
+}
 
 \begin{algorithm}[t]
     \caption{\texttt{Schedule} a Set of External Transitions}
@@ -129,9 +138,7 @@ In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} an
     \begin{algorithmic}[1]
         \REQUIRE A System $S$, a set of external canonical transitions $t_1,t_2,\cdots,t_n$
         \ENSURE A synchronized transition $t$
-        \IF{$\exists i,j\in \{1,\cdots, n\}$ s.t. $t_i$ and $t_j$ belong to the same automaton}
-            \STATE \textbf{return} $t\leftarrow null$
-        \ENDIF
+        \STATE \liyi{\textbf{if} not $synchronizable(t_1,\cdots,t_n)$ \textbf{then} \textbf{return} $t\leftarrow null$}
 
         \STATE \emph{t.g, t.S, G} $\leftarrow \bigwedge_i t_i.g,\:[\:]$, an empty graph $\langle V,E\rangle$
         \FOR{$i\leftarrow 1,\cdots,n$}
@@ -163,7 +170,8 @@ In \lang{} \emph{systems}, only adjoint variables (\texttt{reqRead, reqWrite} an
     \end{algorithmic}
 \end{algorithm}
 
-Algorithm \ref{alg:synchronize} may not always produce a valid synchronized transition. When the dependency graph has a \emph{ring}, the algorithm fails due to \emph{circular dependencies}. For example, transition \texttt{g$_1$->\{sync A;sync B;\}} and transition \texttt{g$_2$->\{sync B;sync A;\}} cannot be synchronized where both $A,B$ need to be triggered first.
+Algorithm \ref{alg:synchronize} may not always produce a valid synchronized transition. When the dependency graph has a \emph{ring}, the algorithm fails due to \emph{circular dependencies}.
+For example, transition \texttt{g$_1$->\{sync A;sync B;\}} and transition \texttt{g$_2$->\{sync B;sync A;\}} cannot be synchronized where both $A,B$ need to be triggered first.
 
 Topological sorting, as we all know, may generate different schedules for the same dependency graph. The following theorem shows that all these schedules are equivalent as transition statements.
 

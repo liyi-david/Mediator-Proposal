@@ -83,8 +83,7 @@ typedef enum {null} init null as NULL;
 automaton <T:type,size:int> Queue(A:in T, B:out T) {
     variables {
         buf : ((T | NULL) init null) [size];
-        phead : int 0 .. (size - 1) init 0;
-        ptail : int 0 .. (size - 1) init 0;
+        phead, ptail : int 0 .. (size - 1) init 0;
     }
     ...
 }
