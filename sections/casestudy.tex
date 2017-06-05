@@ -14,13 +14,13 @@ In modern distributed computing frameworks (e.g. MPI\cite{mpibook} and ZooKeeper
 	\label{fig:leaderelection}
 \end{figure}
 
-The algorithm has the following steps. Firstly, \liyi{each process sends a voting message including its own \emph{id} to its successor. Then when a process receives a voting message, it will
-	\begin{itemize}
-		\item forward the message to its successor if it contains a larger \emph{id} than itself, or
-		\item ignore the message if it contains a smaller \emph{id} than itself, or
-		\item take itself as a leader if it contains the same \emph{id} with itself, and send an acknowledgement message to this successor, which will be spread over around the ring.
-	\end{itemize} 
-}
+The algorithm has the following steps. At first, each process sends a voting message containing its own \emph{id} to its successor. And when a process receives a voting message, the process will
+\begin{itemize}
+	\item forward the message to its successor if it contains a larger \emph{id} than the process itself, or
+	\item ignore the message if it contains a smaller \emph{id} than the process itself, or
+	\item  take e process itself as a leader if it contains the same \emph{id} with itself, and send an acknowledgement message to this successor, which will be spread over around the ring.
+\end{itemize} 
+
 
 Here we formalize this algorithm through a more general approach. Leader election is encapsulated as the \texttt{election\_module}. A computing module \texttt{worker},  attached to the \texttt{election\_module}, is an implementation of the working process. 
 
@@ -53,7 +53,7 @@ automaton <id:int> election_module ( left : in msgVote, right : out msgVote,
 \end{example}
 
 
-The following code fragment encodes a parallel program containing 3 \emph{worker}s and 3 \emph{election\_module}s to organize the \emph{worker}s.  In this example, we do not focus on the implementation details on \emph{worker}s, \liyi{but hope that any component with a proper interface could be embedded into this system instead}. 
+The following code fragment encodes a parallel program containing 3 \emph{worker}s and 3 \emph{election\_module}s to organize the \emph{worker}s.  In this example, we do not focus on the implementation details on \emph{worker}s, but hope that any component with a proper interface could be embedded into this system instead. 
 
 \begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
 system <worker: interface (query:in msgLocal)> parallel_instance() {
