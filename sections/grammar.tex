@@ -83,7 +83,7 @@ A \lang{} \emph{program} is defined as follows.
 For simplicity, we use $Dom(T)$ to denote the value domain of type $T$, i.e. the set of all possible value of $T$.
 
 \begin{example}[Types Used in a Queue] A queue is a well-known data structure being used in various message-oriented middlewares. In this example, we introduce some type declarations and local variables used in an automaton \texttt{Queue} defining the queue structure. As shown in the following code fragment, we declare a singleton enumeration \texttt{NULL}, which contains only one element \texttt{null}. The buffer of a queue is in turn formalized as an array of \texttt{T} or \texttt{NULL}, indicating that the elements in the queue can be either an assigned item or empty. The head and tail pointers are defined as two bounded integers.
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
 typedef enum {null} init null as NULL;
 automaton <T:type,size:int> Queue(A:in T, B:out T) {
     variables {
@@ -186,7 +186,7 @@ Transitions in \lang{} automata are \liyi{literally ordered}. \liyi{Given a list
     \item Write the earliest existing buffered data to its output port $B$ when the buffer is not empty. 
 \end{enumerate}
 External transitions, on the other hand, mainly show the implementation details for the enqueue and dequeue operations.
-\begin{lstlisting}
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily]
 // internal transitions
 !A.reqRead && (buf[phead] == null) -> A.reqRead := true;
 A.reqRead && (buf[phead] != null) -> A.reqRead := false;
@@ -212,20 +212,20 @@ $t_G=\{t_1,\cdots, t_n\}$ where $t_i=g_i\rightarrow S_i$ is a single transition 
 
 Transitions encapsulated in a \texttt{group} are not ruled by priority. Instead, the group itself is literally ordered w.r.t. other groups and single transitions (basically, we can take all single transitions as a singleton transition group).
 
-% \begin{example}[Another Queue Implementation] In Example \ref{exp:trans_queue}, when both \emph{enqueue} and \emph{dequeue} operations are activated, \emph{enqueue} will always be fired first. Such a queue may get stuff up immediately when requests start accumulating, and in turn lead to excessive memory usage. With the help of transition groups, here we show another non-deterministic implementation which solves this problem.
-% \begin{lstlisting}
-% group {
-%     (A.reqRead && A.reqWrite) -> {
-%         sync A; buf[phead] := A.value; phead := next(phead);
-%     }
-%     (B.reqRead && B.reqWrite) -> {
-%         B.value := buf[ptail]; ptail := next(ptail); sync B;
-%     }
-% }
-% \end{lstlisting}
-% In the above code fragment, the two external transitions are encapsulated together as a transition group. Consequently, firing of the dequeue operation doesn't rely on deactivation of the enqueue operation.
-% \label{exp:transgroup_queue}
-% \end{example}
+\begin{example}[Another Queue Implementation] In Example \ref{exp:trans_queue}, when both \emph{enqueue} and \emph{dequeue} operations are activated, \emph{enqueue} will always be fired first. Such a queue may get stuff up immediately when requests start accumulating, and in turn lead to excessive memory usage. With the help of transition groups, here we show another non-deterministic implementation which solves this problem.
+\begin{lstlisting}
+group {
+    (A.reqRead && A.reqWrite) -> {
+        sync A; buf[phead] := A.value; phead := next(phead);
+    }
+    (B.reqRead && B.reqWrite) -> {
+        B.value := buf[ptail]; ptail := next(ptail); sync B;
+    }
+}
+\end{lstlisting}
+In the above code fragment, the two external transitions are encapsulated together as a transition group. Consequently, firing of the dequeue operation doesn't rely on deactivation of the enqueue operation.
+\label{exp:transgroup_queue}
+\end{example}
 
 
 We use a 3-tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton in \lang{}, where $Ports$ is a set of ports, $Vars$ is a set of local variables (the set of port variables are denoted by $Adj(A)$, which can be obtained from $Ports$ directly) and $Trans_G=[t_{G_1},\cdots,t_{G_n}]$ is a sequence of transition groups, where all single transitions are encapsulated as singleton transition groups.
