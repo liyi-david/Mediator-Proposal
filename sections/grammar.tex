@@ -1,18 +1,23 @@
 \section{Syntax of \lang{}}
 \label{sec:syntax}
 
-In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown in the following block, essentially contains several parts,
+In this section, we introduce the syntax of \lang{}, \liyi{represented by a variant of Extended Backus-Naur Form (known as EBNF) where:}
+\begin{itemize}
+    \item \liyi{Terminal symbols are written in \tsym{monospaced fonts}.}
+    \item \liyi{Non-terminal productions are encapsulated in $\ntsym{angle brackets}$}.
+    \item \liyi{We use question marks ($^?$) to denote ``zero or one occurence'', star symbol ($^*$) to denote ``zero or more occurence'' and plus sign ($^+$) to denote ``one or more occurence''.}
+\end{itemize}
+
+A \lang{} \emph{program} is defined as follows.
 \begin{bnf}
     \ntsym{program} ::=  (& \ntsym{typedef} | \ntsym{function} | \ntsym{automaton} | \ntsym{system})^*
 \end{bnf}
 
-% TODO: make it clear
-\begin{enumerate}
-    \item \emph{Typedef}s specifying alias for given types.
-    \item \emph{Function}s defining customized functions that can be reused in other functions, automata and systems.
-    \item \emph{Automaton}s defining automata through local variables and transitions.
-    \item \emph{System}s declaring hierarchical structures of components and connections between the components. Both components and connections are described by automata.
-\end{enumerate}
+\liyi{
+\emph{Typedef}s specifying alias for given types.
+\emph{Function}s defining customized functions.
+\emph{System}s declaring hierarchical structures of components and connections between them. Both components and connections are described by automata.
+}
 
 \subsection{Type System}
 \label{subsec:typesystem}
@@ -39,7 +44,7 @@ In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown
     \end{tabular}
 \end{table}
 
-\noindent\emph{Composite Types.} Composite types can be used to contruct complex data types from simpler ones. Several composite patterns are introduced as follows:
+\noindent\emph{Composite Types.} Composite types can be used to construct complex data types from simpler ones. Several composite patterns are introduced as follows:
 
 \begin{table}
     \caption{Composite Data Types (\texttt{T} denotes an arbitrary data type)}
@@ -68,16 +73,16 @@ In this section, we introduce the syntax of \lang{}. A \lang{} program, as shown
     \item \emph{Initialized}. An initialized type is used to specify default value of a type $T_{base}$ with \texttt{term}.
 \end{itemize}
 
-\noindent\emph{Parameter Types}. A generalizable automaton or system that includes a template function or template component needs to be defined on many occasions. For example, a binary operator that support various operations ($+$,$\times$, etc.), or an encrypted communication system that supports different encryption algorithms. Parameter types make it possible to take functions, automata or systems as template parameters. \lang{} supports two parameter types: 
+\noindent\emph{Parameter Types}. A generalizable automaton or system that includes a template function or template component needs to be defined on many occasions. For example, a binary operator that supports various operations ($+$,$\times$, etc.), or an encrypted communication system that supports different encryption algorithms. Parameter types make it possible to take functions, automata or systems as template parameters. \lang{} supports two parameter types: 
 \begin{enumerate}
     \item \emph{An Interface}, denoted by \texttt{interface (port$_1$:T$_1$,$\cdots,$port$_n$:T$_n$)}, defines a parameter that could be any \emph{automaton} or \emph{system} with exactly the same interface (i.e. number, types and directions of the ports are a perfect match). Interfaces are only used in templates of \emph{system}s.
     % TODO: interfaces are not permitted in automata since automata do not support hierarchical structure
-    \item \emph{A Function}, denoted by \texttt{func (arg$_1$:T$_1$,$\cdots, $arg$_n$:T$_n$):T}， defines a function that have the argument types $\texttt{T}_1,\cdots,\texttt{T}_n$ and result types \texttt{T}. Functions are permitted to appear in templates of \emph{other functions}, \emph{automata} and \emph{system}s.
+    \item \emph{A Function}, denoted by \texttt{func (arg$_1$:T$_1$,$\cdots, $arg$_n$:T$_n$):T}， defines a function that has the argument types $\texttt{T}_1,\cdots,\texttt{T}_n$ and result types \texttt{T}. Functions are permitted to appear in templates of \emph{other functions}, \emph{automata} and \emph{system}s.
 \end{enumerate}
 
 For simplicity, we use $Dom(T)$ to denote the value domain of type $T$, i.e. the set of all possible value of $T$.
 
-\begin{example}[Types Used in a Queue] Queue is a well-known data structure being used in various message-oriented middlewares. In this example, we introduce some type declarations and local variables used in an automaton \texttt{Queue} defining the queue structure. As shown in the following code fragment, we declare a singleton enumeration \texttt{NULL}, which contains only one element \texttt{null}. The buffer of a queue is in turn formalized as an array of \texttt{T} or \texttt{NULL}, indicating that the elements in the queue can be either an assigned item or empty. The head and tail pointers are defined as two bounded integers.
+\begin{example}[Types Used in a Queue] A queue is a well-known data structure being used in various message-oriented middlewares. In this example, we introduce some type declarations and local variables used in an automaton \texttt{Queue} defining the queue structure. As shown in the following code fragment, we declare a singleton enumeration \texttt{NULL}, which contains only one element \texttt{null}. The buffer of a queue is in turn formalized as an array of \texttt{T} or \texttt{NULL}, indicating that the elements in the queue can be either an assigned item or empty. The head and tail pointers are defined as two bounded integers.
 \begin{lstlisting}
 typedef enum {null} init null as NULL;
 automaton <T:type,size:int> Queue(A:in T, B:out T) {
@@ -99,10 +104,11 @@ Functions are used to encapsulate and reuse complex computation processes. In \l
 The abstract syntax tree of functions is as follows.
 
 \begin{bnf}
-    \ntsym{funcDecl} ::= & \tsym{function} \ntsym{template}^? \ntsym{identifier} \tsym{(} \ntsym{arguments} \tsym{)} \tsym{\{} \\
+    \ntsym{funcDecl} ::= & \tsym{function} \ntsym{template}^? \ntsym{identifier} \ntsym{funcInterface} \tsym{\{} \\
     & (\tsym{variables} \tsym{\{} \ntsym{varDecl}^* \tsym{\}})^? \\
     & \tsym{statements} \tsym{\{} \ntsym{assignStmt}^* \ntsym{returnStmt} \tsym{\}} \\
-    \ntsym{assignStmt} ::= & \ntsym{term} \tsym{:=} \ntsym{term} \\
+    \ntsym{funcInterface} ::= & \liyi{\tsym{(} (\ntsym{identifier} \tsym{:} \ntsym{type})^* \tsym{)} \tsym{:} \ntsym{type}}\\
+    \ntsym{assignStmt} ::= & \liyi{\ntsym{term} (\tsym{,} \ntsym{term})^* \tsym{:=} \ntsym{term} (\tsym{,} \ntsym{term})^*} \\
     \ntsym{returnStmt} ::= & \tsym{return} \ntsym{term} \\
     \ntsym{varDecl} ::= & \ntsym{identifier} \tsym{:} \ntsym{type} (\tsym{init} \ntsym{term})^? 
 \end{bnf}
@@ -112,9 +118,9 @@ Basically, a function definition includes the following parts.
 
 \smalltitle{Name} An identifier that indicates the name of this function.
 
-\smalltitle{Type} Type of a function is determined by its \emph{number and types of arguments}, together with \emph{the type of its return value.} 
+\smalltitle{Type} Type of a function is determined by the \emph{number and types of arguments}, together with \emph{the type of its return value.} 
 
-\smalltitle{Body} Body of a function includes an optional set of local variables and a list of ordered statements that describe how the return value is computed. The statements always end by a \texttt{return} statement.
+\smalltitle{Body} Body of a function includes an optional set of local variables and a list of ordered \liyi{(assignment or return) statements. In an assignment statement, local variables, parameters and arguments can be referenced, but only local variables are writable.} The list of statements always ends up with a \texttt{return} statement.
 
 \begin{example}[Incline Operation on Queue Pointers] Incline operation of pointers are widely used in a \emph{round-robin} queue, where storage are reused circularly. The \texttt{next} function shows how pointers in such queues (denoted by a bounded integer) are inclined. 
     \label{exp:successor_function}
@@ -127,7 +133,7 @@ function <size:int> next(pcurr:int 0..(size-1)) : int 0..(size-1) {
 
 \subsection{Automaton : The Basic Behavioral Unit}
 
-Automata theory is widely used in formal verification. And its variations, finite-state machines for example, are also accepted by modeling tools like NI LabVIEW and Mathworks Simulink/Stateflow.
+Automata theory is widely used in formal verification, and its variations, finite-state machines for example, are also accepted by modeling tools like NI LabVIEW and Mathworks Simulink/Stateflow.
 
 Here we introduce the notion of \emph{automaton} as the basic behavior unit. Compared with other variations, an \emph{automaton} in \lang{} contains local variables and typed ports that support complicated behavior and powerful communication. The abstract syntax tree of \emph{automaton} is as follows.
 
@@ -138,7 +144,7 @@ Here we introduce the notion of \emph{automaton} as the basic behavior unit. Com
     \ntsym{port} ::=& \ntsym{identifier} \tsym{:} (\tsym{in}|\tsym{out}) \ntsym{type} \\
     \ntsym{transition} ::=& \ntsym{guardedStmt} | \tsym{group} \tsym{\{} \ntsym{guardedStmt}^* \tsym{\}}\\
     \ntsym{guardedStmt} ::=& \ntsym{term} \tsym{->} (\ntsym{stmt} | \tsym{\{} \ntsym{stmt}^* \tsym{\}}) \\
-    \ntsym{stmt} ::=& \ntsym{term} \tsym{:=} \ntsym{term} | \tsym{sync} \ntsym{identifier}^+
+    \ntsym{stmt} ::=& \liyi{\ntsym{assignStmt}} | \tsym{sync} \ntsym{identifier}^+
 \end{bnf}
 
 \smalltitle{Template} Compared with templates in functions, templates in automata provide support for parameters of \emph{function type}.
@@ -147,35 +153,28 @@ Here we introduce the notion of \emph{automaton} as the basic behavior unit. Com
 
 \smalltitle{Type} Type of an automaton is determined by the \emph{number} and \emph{type}s of its ports. Type of a port contains its \emph{direction} (either \texttt{in} or \texttt{out}) and its \emph{data type}. For example, a port $P$ that takes integer values as input is denoted by \texttt{P:in int}. To ensure the well-definedness of automata, ports are required to have an \emph{initialized} data type, e.g. \texttt{int 0..1 init 0} instead of \texttt{int 0..1}.
 
-\smalltitle{Variables} Two classes of variables are used in an automaton definition. \emph{Local variables} are declared in the \emph{variables} segment, which can be referenced only in its owner automaton. \emph{Adjoint variables} are used to describe the status and value of ports.
+\smalltitle{Variables} Two classes of variables are used in an automaton definition. \emph{Local variables} are declared in the \emph{variables} segment, which can be referenced only in its owner automaton. \liyi{\emph{Port variables}, on the other hand, are shared variables that describe the status and value of ports.}
 
-Syntactically, adjoint variables are denoted as built-in fields of ports.
-An arbitrary port $P$ has two boolean fields \texttt{P.reqRead} and \texttt{P.reqWrite} indicating whether there is any pending \emph{read} or \emph{write} requests on $P$, and a data field \texttt{P.value} indicating the current value of $P$. Adjoint variables are shared between automata to perform communications.
-For an output port, the \texttt{reqRead} field is read-only and the \texttt{reqWrite} field is writable. Similarly, for an input port the \texttt{reqRead} field is writable but its \texttt{reqWrite} field is read-only. The \texttt{value} field can be assigned only when it belongs to an output port.
+\liyi{Port variables are denoted as fields of ports.}
+An arbitrary port $P$ has two corresponding Boolean port variables \texttt{P.reqRead} and \texttt{P.reqWrite} indicating whether there is any pending \emph{read} or \emph{write} requests on $P$, and a data field \texttt{P.value} indicating the current value of $P$. \liyi{When automata are combined, port variables are shared between automata to perform communications. To avoid data-conflict, we require that only \texttt{reqRead} and \texttt{value} fields of input ports, and \texttt{reqWrite} fields of output ports are writable. Informally, an automaton only requires data from its input port and writes data to its output port.}
 
 \smalltitle{Transitions}
-In \lang{}, behavior of an automaton is described by a set of guarded transitions (groups), with no explicit concept of locations (actually locations can be easily encoded as local enumeration variables). A \emph{transition} (denoted by \emph{guard} \texttt{->} \emph{statements}) comprises two parts, a boolean term \emph{guard} that declares the activating condition of this transition, and a (sequence of) statement(s) describing how variables are updated when the transition is fired.
+In \lang{}, behavior of an automaton is described by a \liyi{list} of guarded transitions (groups).
+% , with no explicit concept of locations (actually locations can be easily encoded as local enumeration variables).
+A \emph{transition} (denoted by \emph{guard} \texttt{->} \emph{statements}) comprises two parts, a Boolean term \emph{guard} that declares the activating condition of this transition, and a (sequence of) statement(s) describing how variables are updated when the transition is fired.
 
 We have two types of statements supported in automata:
 \begin{itemize}
-    \item \emph{Assignment Statement} (\texttt{var$_1$,...,var$_n$ := term$_1$,...,term$_n$}). Assignment statements update variables with new values where only local variables and writable adjoint variables are assignable.
-    \item \emph{Synchronizing Statement} (\texttt{sync port$_1$,...,port$_n$}). Synchronizing statements are used as synchronizing \emph{flag}s when joining multiple automata. In a synchronizing statement, the order of ports being synchronized is arbitrary. 
+    \item \emph{Assignment Statement} (\texttt{var$_1$,...,var$_n$ := term$_1$,...,term$_n$}). Assignment statements update variables with new values where only local variables and writable port variables are assignable.
+    \item \emph{Synchronizing Statement} (\texttt{sync port$_1$,...,port$_n$}). Synchronizing statements are used as synchronizing \emph{flag}s when joining multiple automata. In a synchronizing statement, the order of ports being synchronized is arbitrary. For further details, please refer to Section \ref{subsec:composition}.
 \end{itemize}
 
-% TODO: why not so simple as for ?
-With the introduction of adjoint variables, synchronizing transitions in automata joining is not so simple as in traditional automata models where all variables are local. Informally speaking, the synchronizing statements are used to properly schedule the assignment operations in different automata.
-
-Synchronizing statements are also important flags to distinguish between external transitions and internal transitions. A transition is called \emph{external} iff. it synchronizes with its environment through some ports, or \emph{internal} otherwise. Literally, all transitions, where synchronizing statements are involved, are \emph{external} transitions. In such transitions, the following rules should be strictly followed.
-
-\begin{enumerate}
-    \item Any assignment statements including reference to an input port should be placed after its corresponding synchronizing statement.
-    \item Any assignment statements to an output port should be placed before its corresponding synchronizing statement.
-\end{enumerate}
-
+% Synchronizing statements are also important flags to distinguish between external transitions and internal transitions.
+\liyi{A transition is called \emph{external} iff. it synchronizes with its environment through certain ports or \emph{internal} nodes with synchronizing statements. In such transitions, we require that \emph{any assignment statements including reference to an input(output) port should be placed after(before) its corresponding synchronizing statement}}.
 
 We use $g\rightarrow S$ to denote a transition, where $g$ is the guard formula and $S=[s_1,\cdots,s_n]$ is a sequence of statements. 
 
-Transitions in \lang{} automata are organized with \emph{priority}. A transition has higher priority than all the other following ones. When multiple transitions are activated simultaneously by the environment, the one with highest priority will be fired first. 
+Transitions in \lang{} automata are \liyi{literally ordered}. \liyi{Given a list of transitions $g_1\rightarrow S_1,\cdots, g_n\rightarrow S_n$ where $\{g_{i_j}\}_{j=1,\cdots,m}$ is satisfied, only the transition $g_{min\{i_j\}}\rightarrow S_{min\{i_j\}}$ will be fired. In other words, $g_i\rightarrow S_i$ is fired iff. $g_i$ is satisfied and for all $0<j<i$, $g_j$ is unsatisfied.}
 % Formally speaking, suppose $g_1\rightarrow S_1,\cdots,g_n\rightarrow S_n$ is a list of transitions with priority, we could use an equivalent form to rewrite them as the followings, where priority is not necessary any more.
 % \[
 %     g_1\rightarrow S_1, \lnot g_1\land g_2\rightarrow S_2,\cdots,\lnot g_1\land \lnot g_2\land\cdots\land \lnot g_{n-1} \land g_n\rightarrow S_n
@@ -196,11 +195,13 @@ B.reqWrite && (buf[ptail] == null) -> B.reqWrite := false;
 
 // enqueue operation (as an external transition)
 (A.reqRead && A.reqWrite) -> {
-    sync A; buf[phead] := A.value; phead := next(phead);
+    sync A; // read data from input port A
+    buf[phead] := A.value; phead := next(phead);
 }
 // dequeue operation (as an external transition)
 (B.reqRead && B.reqWrite) -> {
-    B.value := buf[ptail]; ptail := next(ptail); sync B;
+    B.value := buf[ptail]; ptail := next(ptail);
+    sync B; // write data to output port B
 }
 \end{lstlisting}
 \label{exp:trans_queue}
@@ -211,46 +212,51 @@ $t_G=\{t_1,\cdots, t_n\}$ where $t_i=g_i\rightarrow S_i$ is a single transition 
 
 Transitions encapsulated in a \texttt{group} are not ruled by priority. Instead, the group itself is literally ordered w.r.t. other groups and single transitions (basically, we can take all single transitions as a singleton transition group).
 
-\begin{example}[Another Queue Implementation] In Example \ref{exp:trans_queue}, when both \emph{enqueue} and \emph{dequeue} operations are activated, \emph{enqueue} will always be fired first. Such a queue may get stuff up immediately when requests start accumulating, and in turn lead to excessive memory usage. With the help of transition groups, here we show another non-deterministic implementation which solves this problem.
-\begin{lstlisting}
-group {
-    // enqueue operation (as an external transition)
-    (A.reqRead && A.reqWrite) -> {
-        sync A; buf[phead] := A.value; phead := next(phead);
-    }
-    // dequeue operation (as an external transition)
-    (B.reqRead && B.reqWrite) -> {
-        B.value := buf[ptail]; ptail := next(ptail); sync B;
-    }
-}
-\end{lstlisting}
-In the above code fragment, the two external transitions are encapsulated together as a transition group. Consequently, firing of the dequeue operation doesn't rely on deactivation of the enqueue operation.
-\label{exp:transgroup_queue}
-\end{example}
+% \begin{example}[Another Queue Implementation] In Example \ref{exp:trans_queue}, when both \emph{enqueue} and \emph{dequeue} operations are activated, \emph{enqueue} will always be fired first. Such a queue may get stuff up immediately when requests start accumulating, and in turn lead to excessive memory usage. With the help of transition groups, here we show another non-deterministic implementation which solves this problem.
+% \begin{lstlisting}
+% group {
+%     (A.reqRead && A.reqWrite) -> {
+%         sync A; buf[phead] := A.value; phead := next(phead);
+%     }
+%     (B.reqRead && B.reqWrite) -> {
+%         B.value := buf[ptail]; ptail := next(ptail); sync B;
+%     }
+% }
+% \end{lstlisting}
+% In the above code fragment, the two external transitions are encapsulated together as a transition group. Consequently, firing of the dequeue operation doesn't rely on deactivation of the enqueue operation.
+% \label{exp:transgroup_queue}
+% \end{example}
 
 
-We use a 3-tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton in \lang{}, where $Ports$ is a set of ports, $Vars$ is a set of local variables (the set of adjoint variables are denoted by $Adj(A)$, which can be obtained from $Ports$ directly) and $Trans_G=[t_{G_1},\cdots,t_{G_n}]$ is a sequence of transition groups, where all single transitions are encapsulated as singleton transition groups.
+We use a 3-tuple $A=\langle Ports, Vars, Trans_G \rangle$ to represent an automaton in \lang{}, where $Ports$ is a set of ports, $Vars$ is a set of local variables (the set of port variables are denoted by $Adj(A)$, which can be obtained from $Ports$ directly) and $Trans_G=[t_{G_1},\cdots,t_{G_n}]$ is a sequence of transition groups, where all single transitions are encapsulated as singleton transition groups.
 
 \subsection{System : The Composition Approach}
 \label{subsec:system}
 
 Theoretically, automata and their product is capable to model various classical applications. However, modeling complex systems through a mess of transitions and tons of local variables could become a real disaster.
 
-As mentioned before, \lang{} is designed to help the programmers, even nonprofessionals, to enjoy the convenience of formal tools. And that is exactly the reason why we introduce the notion of \emph{system} in the language. Basically, a \emph{system} is the textural representation of a hierarchical diagram where automata and smaller systems are organized as different roles (\emph{component}s or 
-\emph{connection}s). 
+As mentioned before, \lang{} is designed to help the programmers, even nonprofessionals, to enjoy the convenience of formal tools\liyi{, which} is exactly the reason why we introduce the notion of \emph{system} \liyi{as an \emph{encapsulation mechanism}}. Basically, a \emph{system} is the textual representation of a hierarchical diagram where automata and smaller systems are organized as \emph{component}s or 
+\emph{connection}s. 
 
 % Hierarchical diagrams have already been used in various modeling tools (for example, SCADE \cite{AbdullaISoLA2006,BerryScp1992}, Simulink \cite{hahn2016essentialsimulink} and LabVIEW \cite{labview}). However, in most tools, connections are simply synchronous link that seal two ports together. Inspired by the connectors in Reo, \lang{} to declare an automaton as a connection, which lead to more powerful and intuitive diagrams. 
 
 \begin{example}[A Message-Oriented Middleware]
-    A simple diagram of a message-oriented middleware \cite{CurryMfc2004} is provided in Fig. \ref{fig:diagram}, where a queue works as a connector to coordinate the behavior of different components (message producers and consumers).
+    A simple diagram of a message-oriented middleware \cite{CurryMfc2004} is provided in Fig. \ref{fig:diagram}, where a queue works as a connector to coordinate the message producers and consumers.
 \end{example}
 
 \begin{figure}
     \centering
-    \includegraphics[width=.8\textwidth]{images/middleware_queue.png}
-    \caption{A Senerio where Queue is used as Message-Oriented Middleware}
+    \input{images/middleware_queue}
+    \caption{A Scenario where Queue is used as Message-Oriented Middleware}
     \label{fig:diagram}
 \end{figure}
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=.8\textwidth]{images/middleware_queue.png}
+%     \caption{A Scenario where Queue is used as Message-Oriented Middleware}
+%     \label{fig:diagram}
+% \end{figure}
 
 The abstract syntax tree of \emph{system}s is as follows:
 \begin{bnf}
@@ -272,10 +278,11 @@ The abstract syntax tree of \emph{system}s is as follows:
 \smalltitle{Components} In \texttt{components} segments, we can declare any entity of an \emph{interface type} as components, e.g. an automaton, a system, or a parameter of interface type. 
 Ports of a component can be referenced by \texttt{identifier.portName} once declared.
 
-\smalltitle{Connections} Connections, e.g. the arrows in Fig. \ref{fig:diagram}, are used to connect \emph{a) the ports of the system itself, b) the ports of its components, and c) the internal nodes}. We declare the connections in \texttt{connections} segments.
+\smalltitle{Connections} Connections, e.g. the queue in Fig. \ref{fig:diagram}, are used to connect \emph{a) the ports of the system itself, b) the ports of its components, and c) the internal nodes}. We declare the connections in \texttt{connections} segments.
 Both components and connections are supposed to run as automata in parallel.
 
-\smalltitle{Internals} In certain cases, we need to combine multiple connections to perform more complex coordination behavior. Internal nodes, as declared in \texttt{internals} segments, are untyped identifiers which are capable to weld two ports with consistent data-flow direction. In other words, an internal node receives data from one port and sends it to another simultaneously.
+\smalltitle{Internals} \liyi{Sometimes we need to combine multiple connections to perform more complex coordination behavior. Internal nodes, declared in \texttt{internals} segments, are untyped identifiers which are capable to weld two ports with consistent data-flow direction. For example, in Fig.~\ref{fig:diagram} the two internal nodes (denoted by $\bullet$) are used to combine a \emph{replicator}, a queue and a \emph{merger} together to work as a multi-in-multi-out queue.}
+
 
 % Essentially, data flow in an internal node should always follow the same direction, i.e. an internal node doesn't collect or generate any data, it only receives from one end and forward it simultaneously. The direction, together with the type of an internal node, should be determined when being compiled.
 

@@ -1,0 +1,88 @@
+typedef struct {
+	vtype: enum {vote, ack},
+	id: int
+} as voteMsg;
+
+typedef struct {
+	leaderStatus : enum { pending, acknowledged },
+	localID : int,
+	leaderID : int | NULL
+} as localMsg;
+
+automaton <id:int> election_module (
+	left  : in voteMsg,  right  : out voteMsg,
+	query : in localMsg, notice : out localMsg
+) {
+	variables {
+		leaderStatus : enum { pending, acknowledged } init pending;
+		buffer : (voteMsg | NULL) init {vtype: vote, id:id};
+		leaderId : (int | NULL) init null;
+	}
+	
+	transitions {
+		true -> { left.reqRead, right.reqWrite := buffer == null, buffer != null; }
+		
+		(buffer != null) && (buffer.vtype == vote) && (buffer.id < id) -> buffer := null;
+		(buffer != null) && (buffer.vtype == vote) && (buffer.id == id) -> {
+			buffer.vtype := ack;
+		}
+		
+		(buffer != null) && (buffer.vtype == ack) && (buffer.id < id) -> {
+			// restart voting if the acknowledged leader has a smaller id
+			buffer := { vtype: vote, id: id };
+		}
+		
+		(buffer != null) && (buffer.vtype == ack) && (buffer.id >= id) -> {
+			leaderStatus := acknowledged;
+			leaderId := buffer.id;
+			
+			// if the current node is acknowledged as leader, we don't need
+			// to continue broadcasting this message
+			buffer := buffer.id == id ? null : buffer;
+		}
+		
+		(buffer == null) && left.reqWrite -> {
+			perfworm left;
+			buffer := left.value;
+		}
+		
+		(buffer != null) && right.reqRead -> {
+			right.value := buffer;
+			perform right;
+		}
+	}
+	
+	/*
+	 * transitions that describe local communication between a component and the leader election module
+	 */
+	transitions {
+		true -> { notice.reqWrite, query.reqRead := query.reqWrite, notice.reqRead; }
+		
+		notice.reqRead && notice.reqWrite -> {
+			perform query;
+			notice.value := { leaderStatus : leaderStatus, localID: id, leaderID: leaderID };
+			perform notice;
+		}
+	}
+}
+
+system cluster_instance() {
+	components {
+		E1 : election_module<1>; E2 : election_module<2>;
+		E3 : election_module<3>;
+		// worker is a undefined computing process and they can be anything
+		C1, C2, C2 : worker;
+	}
+	connections {
+		Sync<msgVote>(E1.left,  E2.right);
+		Sync<msgVote>(E2.right, E3.left );
+		Sync<msgVote>(E3.right, E1.left );
+		
+		Sync<msgLocal>(C1,query,  E1.query );
+		Sync<msgLocal>(C1,notice, E1.notice);
+		Sync<msgLocal>(C2,query,  E2.query );
+		Sync<msgLocal>(C2,notice, E2.notice);
+		Sync<msgLocal>(C3,query,  E3.query );
+		Sync<msgLocal>(C3,notice, E3.notice);
+	}
+}

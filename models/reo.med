@@ -1,0 +1,61 @@
+/* filename : Reo.med
+ * abstract : this file proposes a set of Mediator models for channels in Reo the coordination language
+ */
+
+automaton <T:type> Fifo1 (A: in T, B: out T) {
+	variables { buf : (T | NULL) init null; }
+	transitions {
+		// internal transitions
+		// when the buffer is empty, the input port should be set to 'requesting for a read operation', vice versa
+		(A.reqRead == true && buf != null) -> A.reqRead := false;
+		(A.reqRead == false && buf == null) -> A.reqRead := true;
+		// when the buffer is not empty, the output port should be set to 'requesting for a write operation', vice versa
+		(B.reqWrite == true && buf == null) -> B.reqWrite := false;
+		(B.reqWrite == false && buf != null) -> B.reqWrite := true;
+		
+		// since the previous transitions have higher priority than the following ones, we have
+		// A.reqRead => buf == null, B.reqWrite => buf != null
+		(A.reqRead && A.reqWrite) -> {
+			sync A;
+			buf := A.value;
+		}
+		(B.reqRead && B.reqWrite) -> {
+			B.value, buf := buf, null;
+			sync B;
+		} 
+	}
+}
+
+automaton <T:type> Sync (A: in T, B: out T) {
+	transitions {
+		(A.reqRead != B.reqRead) -> { A.reqRead := B.reqRead; }
+		(B.reqWrite != A.reqWrite) -> { B.reqWrite := A.reqWrite; }
+		
+		// A.reqRead => B.reqRead and B.reqWrite => A.reqWrite
+		(A.reqRead && B.reqWrite) -> {
+			sync A;
+			B.value := A.value;
+			sync B;
+		}
+	}
+	
+}
+
+automaton <T:type> SyncDrain (A: in T, B: in T) {
+	transitions {
+		(A.reqWrite && B.reqWrite && (!A.reqRead || !B.reqRead)) -> { A.reqRead, B.reqRead := true, true; }
+		((!A.reqWrite || !B.reqWrite) && (A.reqRead || B.reqRead)) -> { A.reqRead, B.reqRead := false, false; }
+
+		(A.reqRead && B.reqRead) -> {
+			sync A, B;
+		}
+	}
+}
+
+automaton <T:type> LossySync (A: in T, B: out T) {
+	transitions {
+		// it is always ready to read from its input port
+		(!A.reqRead) -> { A.reqRead := true; }
+		(B.reqWrite != A.reqWrite) -> { B.reqWrite := A.reqWrite; }
+	}
+}

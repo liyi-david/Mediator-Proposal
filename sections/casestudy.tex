@@ -3,24 +3,23 @@
 
 In modern distributed computing frameworks (e.g. MPI\cite{mpibook} and ZooKeeper\cite{JunqueiraZab2011}), \emph{leader election} plays an important role to organize multiple servers efficiently and consistently. This section shows how a classical leader election algorithm is modeled and reused to coordinate other components in \lang{}.
 
-\cite{HagitDistributed2004} proposed a classical algorithm for a typical leader election scenario, as shown in Fig. \ref{fig:leaderelection}. Distributed processes are organized as an \emph{asynchronous unidirectional} ring where communication takes place only between adjacent processes and following certain direction (indicated by the arrows on edges in Fig. \ref{fig:leaderelection} (a)).
+In \cite{HagitDistributed2004} the authors proposed a classical algorithm for a typical leader election scenario, as shown in Fig. \ref{fig:leaderelection}. Distributed processes are organized as an \emph{asynchronous unidirectional} ring where communication takes place only between adjacent processes and following certain direction (indicated by the arrows on edges in Fig. \ref{fig:leaderelection} (a)).
 
 \begin{figure}
 	\centering
-	\resizebox{.8\textwidth}{!}{
+	\resizebox{.7\textwidth}{!}{
         \input{images/cluster}
     }
 	\caption{(a) Topology of an Asynchronous Ring and (b) Structure of a Process}
 	\label{fig:leaderelection}
 \end{figure}
 
-The algorithm has the following steps. At first, each process sends a voting message containing its own \emph{id} to its successor. And when a process receives a voting message, the process will
-\begin{itemize}
-	\item forward the message to its successor if it contains a larger \emph{id} than the process itself, or
-	\item ignore the message if it contains a smaller \emph{id} than the process itself, or
-	\item  take e process itself as a leader if it contains the same \emph{id} with itself, and send an acknowledgement message to this successor, which will be spread over around the ring.
-\end{itemize} 
-
+The algorithm has the following steps. At first, each process sends a voting message containing its own \emph{id} to its successor. When receives a voting message, the process will
+\liyi{
+	\emph{a)} forward the message to its successor if it contains a larger \emph{id} than the process itself, or
+	\emph{b)} ignore the message if it contains a smaller \emph{id} than the process itself, or
+	\emph{c)} take the process itself as a leader if it contains the same \emph{id} with itself, and send an acknowledgement message to this successor, which will be spread over around the ring. 
+}
 
 Here we formalize this algorithm through a more general approach. Leader election is encapsulated as the \texttt{election\_module}. A computing module \texttt{worker},  attached to the \texttt{election\_module}, is an implementation of the working process. 
 

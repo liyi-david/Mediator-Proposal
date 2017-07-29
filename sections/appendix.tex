@@ -10,30 +10,30 @@
     We formally describe the execution of these assignment statements through \emph{pre-configuration}s and \emph{post-configuration}s. Pre- and post-configurations indicate the configurations of an automaton before and after executing a certain statement. In this proof, we assume that the pre-configurations of $s_1$ and $s_1'$ are exactly the same.
     
     
-    We try to use an inductive approach to prove the following hypothesis: \emph{for each assignment $s\in S_1$ and its corresponding assignment $s'\in S_2$, the adjoint variables being changed have the same evaluation in their post-configurations.}
+    We try to use an inductive approach to prove the following hypothesis: \emph{for each assignment $s\in S_1$ and its corresponding assignment $s'\in S_2$, the port variables being changed have the same evaluation in their post-configurations.}
     \begin{enumerate}
-        \item Consider the \emph{first} assignment $s$ in $S_1$ where there are assigned adjoint variables. It is assumed that its corresponding statement in $S_2$ is $s'$. Comparing $s$ and $s'$, we have:
+        \item Consider the \emph{first} assignment $s$ in $S_1$ where there are assigned port variables. It is assumed that its corresponding statement in $S_2$ is $s'$. Comparing $s$ and $s'$, we have:
         \begin{enumerate}
-            \item $s'$ is also the first assignment in $S_2$ which modifies adjoint variables that are also modified by $s$.
-            \emph{(An adjoint variable can be assigned in only one automaton, thus all assignments that modifies these variables belong to the same transition, and their order is strictly maintained thanks to topological sorting.)}
-            \item $s$ and $s'$ include no reference to other adjoint variables. \emph{(According to Algorithm \ref{alg:synchronize}, an adjoint variable can be referenced only when it has been assigned before. As previously assumed, $s$ is the first assignment which modifies an adjoint variable, so $s$ cannot refer any other adjoint variables since all of them have not been assigned yet.})
+            \item $s'$ is also the first assignment in $S_2$ which modifies port variables that are also modified by $s$.
+            \emph{(An port variable can be assigned in only one automaton, thus all assignments that modifies these variables belong to the same transition, and their order is strictly maintained thanks to topological sorting.)}
+            \item $s$ and $s'$ include no reference to other port variables. \emph{(According to Algorithm \ref{alg:synchronize}, an port variable can be referenced only when it has been assigned before. As previously assumed, $s$ is the first assignment which modifies an port variable, so $s$ cannot refer any other port variables since all of them have not been assigned yet.})
             \item In the pre-configuration of $s$ and $s'$, all the local variables of $A$ have the same evaluation. \emph{(Derived from the same reason in (a), together with the hypothesis that $s$ and $s'$ shares the same pre-configuration)}.
         \end{enumerate}
-        Consequently, in the post-configuration of $s$ and $s'$, all the adjoint variables have the \emph{same} evaluation.
+        Consequently, in the post-configuration of $s$ and $s'$, all the port variables have the \emph{same} evaluation.
 
-        \item Assume that all assignments (to adjoint variables) in $s_1,\cdots,s_i$ have been proved to satisfy the hypothesis, now we are going to prove that $s$, the first transition where adjoint variables are referenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy the hypothesis.
+        \item Assume that all assignments (to port variables) in $s_1,\cdots,s_i$ have been proved to satisfy the hypothesis, now we are going to prove that $s$, the first transition where port variables are referenced in $s_{i+1},\cdots,s_n$ and its corresponding $s'$ also satisfy the hypothesis.
 
         \begin{enumerate}
-            \item In the pre-configuration of $s$ and $s'$, all the adjoint variables that are referenced in $s$ and $s'$ have the \emph{same} evaluation. \emph{(Thanks to the assumption, all assignments to adjoint variables in $s_1,\cdots,s_i$ share the same evaluation (on referenced variables only) with their corresponding assignments in $s'$. And on the other hand, for any assignments to the referenced adjoint variables in $S_2$, its index in $S_1$ must be less than $s$, and in turn satisfy the hypothesis due to the assumption.)}
+            \item In the pre-configuration of $s$ and $s'$, all the port variables that are referenced in $s$ and $s'$ have the \emph{same} evaluation. \emph{(Thanks to the assumption, all assignments to port variables in $s_1,\cdots,s_i$ share the same evaluation (on referenced variables only) with their corresponding assignments in $s'$. And on the other hand, for any assignments to the referenced port variables in $S_2$, its index in $S_1$ must be less than $s$, and in turn satisfy the hypothesis due to the assumption.)}
             \item In the pre-configuration of $s$ and $s'$, all the local variables of $A$ have the \emph{same} evaluation. \emph{(Derived by the same reason as in 1.(c))}
         \end{enumerate}
 
-        It's apparent that in the post-configuration of $s$ and $s'$, all the \emph{assigned} adjoint variables have the \emph{same} evaluation.
+        It's apparent that in the post-configuration of $s$ and $s'$, all the \emph{assigned} port variables have the \emph{same} evaluation.
     \end{enumerate}
 
     With the help of the hypothesis, we can prove the original theorem as follows:
     \begin{enumerate}
-        \item For each adjoint variable $v$ and the last statement in $s\in S_1$ where $v$ is assigned, it's obvious that the corresponding statement $s'\in S_2$ is also the last statement that modifies $v$. And according to the hypothesis, the value of $v$ after execution of $s$ and $s'$ are exactly the same. Consequently, the final value of $v$ after execution of $S_1$ and $S_2$ are also exactly the same.
-        \item For each local variable $v$ and the last statement $s\in S_1$ where $v$ is assigned, it is easy to prove that in the pre-configurations of $s$ and its corresponding statement $s'\in S_2$, all the local variables and referenced adjoint variables have the same value. \emph{(When an adjoint variable is referenced, the last assignment on this variable has been executed already. And due to the hypothesis, these variables also have the same value in their pre-configurations.)}
+        \item For each port variable $v$ and the last statement in $s\in S_1$ where $v$ is assigned, it's obvious that the corresponding statement $s'\in S_2$ is also the last statement that modifies $v$. And according to the hypothesis, the value of $v$ after execution of $s$ and $s'$ are exactly the same. Consequently, the final value of $v$ after execution of $S_1$ and $S_2$ are also exactly the same.
+        \item For each local variable $v$ and the last statement $s\in S_1$ where $v$ is assigned, it is easy to prove that in the pre-configurations of $s$ and its corresponding statement $s'\in S_2$, all the local variables and referenced port variables have the same value. \emph{(When an port variable is referenced, the last assignment on this variable has been executed already. And due to the hypothesis, these variables also have the same value in their pre-configurations.)}
     \end{enumerate}
 \end{proof}

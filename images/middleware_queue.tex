@@ -1,0 +1,34 @@
+\tikzstyle{component}=[
+    rectangle,
+    rounded corners,
+    double,
+    double distance = 1pt,
+    draw
+]
+
+\begin{tikzpicture}[remember picture]
+    \node[component] (producer1) at (-3,0.8) {Producer 1};
+    \node[component] (producer2) at (-3,0) {Producer 2};
+    \node[component] (producer3) at (-3,-0.8) {Producer 3};
+
+    \mixednode{(A1)}{(-1,0)};
+    \mixednode{(B1)}{(1,0)};
+
+    \draw [->] (-1.5,0) to (A1);
+    \draw [-] (1.5,0) to (B1);
+
+    \fifoe{(A1)}{(B1)}{node [above=5,xshift=1] {Queue}}
+
+    \node[component] (consumer1) at (3,0.8) {Consumer 1};
+    \node[component] (consumer2) at (3,0) {Consumer 2};
+    \node[component] (consumer3) at (3,-0.8) {Consumer 3};
+
+    \draw [-] (producer1) to [out=0,in=180] (-1.5,0);
+    \draw [-] (producer2) to (-1.5,0);
+    \draw [-] (producer3) to [out=0,in=180] (-1.5,0);
+
+    \draw [->] (1.5,0) to [out=0,in=180] (consumer1);
+    \draw [->] (1.5,0) to [out=0,in=180] (consumer2);
+    \draw [->] (1.5,0) to [out=0,in=180] (consumer3);
+
+\end{tikzpicture}

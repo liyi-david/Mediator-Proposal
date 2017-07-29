@@ -11,6 +11,8 @@
 \usepackage{algorithm}
 \usepackage[normalem]{ulem}
 \usepackage{tikz}
+\usepackage{reotex}
+\usepackage{multicol}
 
 \makeatletter
 \newenvironment{CenteredBox}{% 
@@ -58,7 +60,8 @@
     framexbottommargin=4pt,
     % backgroundcolor=\color{lightgray},
     showstringspaces=false,
-    language=newlang
+    language=newlang,
+    moredelim=**[is][\color{red}]{@}{@}
 }
 
 % terminal symbols

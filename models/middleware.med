@@ -1,0 +1,33 @@
+automaton <T:type,size:int> Queue(A:in T, B:out T) {
+    variables {
+        buf : ((T | NULL) init null) [size];
+        phead : int 0 .. (size - 1) init 0;
+        ptail : int 0 .. (size - 1) init 0;
+    }
+    transitions {
+	    	// Internal Transitions
+		true -> B.reqWrite := (buf[ptail] != null) ;
+		true -> A.reqRead  := (buf[phead] == null) ;
+		
+		// External Transitions
+		(A.reqRead && A.reqWrite) -> {
+		    perform A; buf[phead] := A.value; phead := next(phead);
+		}
+		(B.reqRead && B.reqWrite) -> {
+		    B.value := buf[ptail]; ptail := next(ptail); perform B;
+		}
+    }
+}
+
+system <T:type> middleware_in_use () {
+    components {
+        producer_1, producer_2, producer_3 : Producer<T>;
+        consumer_1, consumer_2, consumer_3 : Consumer<T>;
+    }
+    internals  M1, M2 ;
+    connections {
+        Merger<T>(producer_1.OUT, producer_2.OUT, producer_3.OUT, M1);
+        Queue<T>(M1, M2);
+        Replicator<T>(M2, consumer_1.IN, consumer_2.IN, consumer_3.IN);
+    }
+}
